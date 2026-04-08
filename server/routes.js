@@ -19,337 +19,136 @@ const connection = new Pool({
 connection.connect((err) => err && console.log(err));
 
 /******************
- * WARM UP ROUTES *
+ * GROUP 4 PROJECT ROUTES *
  ******************/
 
-// Route 1: GET /author/:type
-const author = async function(req, res) {
-  // TODO (TASK 1): replace the values of name and pennkey with your own
-  const name = 'Lexi Bobb';
-  const pennkey = '82760938';
+//Route 7: GET /billboard/genre_popularity_over_time
+//Used in 
 
-  // checks the value of type in the request parameters
-  // note that parameters are required and are specified in server.js in the endpoint by a colon (e.g. /author/:type)
-  if (req.params.type === 'name') {
-    // res.json returns data back to the requester via an HTTP response
-    res.json({ data: name });
-  } else if (req.params.type === 'pennkey') {
-    // TODO (TASK 2): edit the else if condition to check if the request parameter is 'pennkey' and if so, send back a JSON response with the pennkey
-    res.json({ data: pennkey });
-  } else {
-    res.status(400).json({});
-  }
-}
-
-// Route 2: GET /random
-const random = async function(req, res) {
-  // you can use a ternary operator to check the value of request query values
-  // which can be particularly useful for setting the default value of queries
-  // note if users do not provide a value for the query it will be undefined, which is falsey
-  const explicit = req.query.explicit === 'true' ? 1 : 0;
-
-  // Here is a complete example of how to query the database in JavaScript.
-  // Only a small change (unrelated to querying) is required for TASK 3 in this route.
-  connection.query(`
-    SELECT *
-    FROM Songs
-    WHERE explicit <= ${explicit}
-    ORDER BY RANDOM()
-    LIMIT 1
-  `, (err, data) => {
-    if (err) {
-      // If there is an error for some reason, print the error message and
-      // return an empty object instead
-      console.log(err);
-      // Be cognizant of the fact we return an empty object {}. For future routes, depending on the
-      // return type you may need to return an empty array [] instead.
-      res.json({});
-    } else {
-      // Here, we return results of the query as an object, keeping only relevant data
-      // being song_id and title which you will add. In this case, there is only one song
-      // so we just directly access the first element of the query results array (data.rows[0])
-      // TODO (TASK 3): also return the song title in the response
-      res.json({
-        song_id: data.rows[0].song_id,
-        //added title!
-        title: data.rows[0].title
-      });
-    }
-  });
-}
-
-/********************************
- * BASIC SONG/ALBUM INFO ROUTES *
- ********************************/
-
-// Route 3: GET /song/:song_id
-const song = async function(req, res) {
-  // TODO (TASK 4): implement a route that given a song_id, returns all information about the song
-  // Hint: unlike route 2, you can directly SELECT * and just return data.rows[0]
-  // Most of the code is already written for you, you just need to fill in the query
-  //I made a variable to help me out with pulling the song selected!
-  const chosen_song = req.params.song_id;
-
-  connection.query(`SELECT *
-                    FROM Songs
-                    WHERE song_id = $1`, [chosen_song]
-                    , (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data.rows[0]);
-    }
-  });
-}
-
-// Route 4: GET /album/:album_id
-const album = async function(req, res) {
-  // TODO (TASK 5): implement a route that given a album_id, returns all information about the album
-   const chosen_album = req.params.album_id;
-
-  connection.query(`SELECT *
-                    FROM albums
-                    WHERE album_id = $1`, [chosen_album]
-                    , (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data.rows[0]);
-    }
-  });
-}
-
-// Route 5: GET /albums
-const albums = async function(req, res) {
-  // TODO (TASK 6): implement a route that returns all albums ordered by release date (descending)
-  // Note that in this case you will need to return multiple albums, so you will need to return an array of objects
-
-  connection.query(`SELECT *
-                    FROM albums
-                    ORDER BY release_date desc`, 
-                    (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data.rows);
-    }
-  });
-}
-
-// Route 6: GET /album_songs/:album_id
-const album_songs = async function(req, res) {
-  // TODO (TASK 7): implement a route that given an album_id, returns all songs on that album ordered by track number (ascending)
-  //get variable/id chosen
-  const chosen_album = req.params.album_id;
-
-  connection.query(`SELECT A.song_id, A.title, A.number, A.duration, A.plays
-                    FROM songs A
-                    left JOIN albums B ON A.album_id = B.album_id
-                    WHERE B.album_id = $1 
-                    ORDER BY number;`, [chosen_album],
-                    (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data.rows);
-    }
-  });
-}
-
-/************************
- * ADVANCED INFO ROUTES *
- ************************/
-
-// Route 7: GET /top_songs
-const top_songs = async function(req, res) {
-  const page = req.query.page;
-  // TODO (TASK 8): use the ternary (or nullish) operator to set the pageSize based on the query or default to 10
-  const pageSize = req.query.page_size ? req.query.page_size : 10;
-
-  if (!page) {
-    // TODO (TASK 9)): query the database and return all songs ordered by number of plays (descending)
-    // Hint: you will need to use a JOIN to get the album title as well
-      connection.query(`SELECT A.song_id, A.title, A.album_id, B.title AS album, A.plays
-                      FROM songs A
-                      JOIN albums B ON A.album_id = B.album_id
-                      ORDER BY plays desc;`,
-                      (err, data) => {
-      if (err) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data.rows);
-      }
-    });
-  } else {
-    // TODO (TASK 10): reimplement TASK 9 with pagination
-    // Hint: use LIMIT and OFFSET (see https://www.w3schools.com/php/php_mysql_select_limit.asp)
-    connection.query(`SELECT A.song_id, A.title, A.album_id, B.title AS album, A.plays
-                      FROM songs A
-                      JOIN albums B ON A.album_id = B.album_id
-                      ORDER BY plays desc
-                      LIMIT $1 OFFSET $2;`, [pageSize, (page - 1) * pageSize],
-                      (err, data) => {
-      if (err) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data.rows);
-      }
-    });
-  }
-}
-
-// Route 8: GET /top_albums
-const top_albums = async function(req, res) {
-  // TODO (TASK 11): return the top albums ordered by aggregate number of plays of all songs on the album (descending), with optional pagination (as in route 7)
-  // Hint: you will need to use a JOIN and aggregation to get the total plays of songs in an album
-  const page = req.query.page;
-  const pageSize = req.query.page_size ? req.query.page_size : 10;
-
-  if (!page) {
-      connection.query(`SELECT B.album_id, B.title, SUM(A.plays) AS plays
-                        FROM songs A
-                        JOIN  albums B ON A.album_id = B.album_id
-                        GROUP BY B.album_id, B.title
-                        ORDER BY plays desc;`,
-                      (err, data) => {
-      if (err) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data.rows);
-      }
-    });
-  } else {
-    // Hint: use LIMIT and OFFSET (see https://www.w3schools.com/php/php_mysql_select_limit.asp)
-    connection.query(`SELECT B.album_id, B.title, SUM(A.plays) AS plays
-                      FROM songs A
-                      JOIN  albums B ON A.album_id = B.album_id
-                      GROUP BY B.album_id, B.title
-                      ORDER BY plays desc
-                      LIMIT $1 OFFSET $2;`, [pageSize, (page - 1) * pageSize],
-                      (err, data) => {
-      if (err) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data.rows);
-      }
-    });
-  }
-}
-
-// Route 9: GET /search_songs
-const search_songs = async function(req, res) {
-  // TODO (TASK 12): return all songs that match the given search query with parameters defaulted to those specified in API spec ordered by title (ascending)
-  // Some default parameters have been provided for you, but you will need to fill in the rest
-  //const title = req.query.title ?? '';
-  const title = req.query.title ? `%${req.query.title}%` : '%';
-  //duration
-  const durationLow = req.query.duration_low ?? 60;
-  const durationHigh = req.query.duration_high ?? 660;
-  //energy
-  const energyLow = req.query.energy_low ?? 0;
-  const energyHigh = req.query.energy_high ?? 1;
-  //plays
-  const playsLow = req.query.plays_low ?? 0;
-  const playsHigh = req.query.plays_high ?? 1100000000;
-  //valence
-  const valenceLow = req.query.valence_low ?? 0;
-  const valenceHigh = req.query.valence_high ?? 1;
-  //danceability
-  const danceabilityLow = req.query.danceability_low ?? 0;
-  const danceabilityHigh = req.query.danceability_high ?? 1;
-
-  const explicit = req.query.explicit === 'true' ? 1 : 0;
-
-  // Here is a complete example of how to query the database in JavaScript.
-  // Only a small change (unrelated to querying) is required for TASK 3 in this route.
-  connection.query(`
-  SELECT song_id, album_id, title, number, duration, plays,
-         danceability, energy, valence, tempo, key_mode, explicit
-          FROM songs
-          WHERE explicit <= $1
-            AND title LIKE $2
-            AND duration BETWEEN $3 AND $4
-            AND energy BETWEEN $5 AND $6
-            AND plays BETWEEN $7 AND $8
-            AND valence BETWEEN $9 AND $10
-            AND danceability BETWEEN $11 AND $12
-          ORDER BY title;
-        `, [explicit,
-          title,
-          durationLow, durationHigh,
-          energyLow, energyHigh,
-          playsLow, playsHigh,
-          valenceLow, valenceHigh,
-          danceabilityLow, danceabilityHigh
-        ], (err, data) => {
-    if (err) {
-      // If there is an error for some reason, print the error message and
-      // return an empty object instead
-      console.log(err);
-      // return type you may need to return an empty array [] instead.
-      res.json([]);
-    } else {res.json(
-        //return all the rows
-        data.rows);
-    }
-  });
-}
-
-/**
- * Route 10: GET /playlist/entrance_songs - Wedding entrance playlist
- *
- * Let's celebrate the wedding of Travis and Taylor!
- *
- * Travis Kelce is cooking up some slow danceable songs with Taylors before the
- * highly anticipated Wedding entrance. Travis decides that a slow danceable
- * song is one with: maximum energy of 0.5 and a minimum danceability of at least 0.73
- * Let's design a wedding entrance playlist for Travis to pass to the DJ
+//Route 8: GET /grammys/genres
+//Used in _____
+const grammys_genres = async function(req, res) {
+/*
+ * Aggregates the Grammy-winning songs, albums and artists by genre and year to show how awards are 
+ * distributed across genres over time. This showcases which genres receive the most industry recognition.
  */
-const entrance_songs = async function(req, res) {
-  // TODO (TASK 13): return a selection of songs that meet the criteria above
-  // You should allow the user to specify how many songs they want (limit) with a default of 10
-  const limit = req.query.limit || 10;
-  const maxEnergy = req.query.max_energy || 0.5;
-  const minDanceability = req.query.min_danceability || 0.73;
+  connection.query(`SELECT
+                    genre,
+                    year,
+                    SUM(grammy_wins) AS grammy_wins
+                  FROM (
+                    SELECT
+                        aa.genre,
+                        gs.year,
+                        COUNT(DISTINCT gs.award) AS grammy_wins
+                    FROM grammy_songs gs
+                    JOIN spotify_songs s ON gs.song_title = s.song_name
+                    JOIN audio_attributes aa ON s.spotify_id = aa.spotify_id
+                    WHERE gs.winner = TRUE
+                        AND aa.genre IS NOT NULL
+                    GROUP BY aa.genre, gs.year
 
-  connection.query(`
-    SELECT A.song_id, A.title, B.title AS album, A.danceability, A.energy
-    FROM songs A
-    JOIN  albums B ON A.album_id = B.album_id
-    WHERE A.energy <= $1 AND A.danceability >= $2
-    ORDER BY A.valence desc, A.danceability
-    LIMIT $3;
-    `, [maxEnergy, minDanceability, limit], (err, data) => {
+
+                    UNION ALL
+                    SELECT
+                        sa.genre,
+                        ga.year,
+                        COUNT(DISTINCT ga.award) AS grammy_wins
+                    FROM grammy_albums ga
+                    JOIN album a ON ga.album_title = a.album_name
+                    JOIN spotify_artists sa ON a.artist_id = sa.artist_id
+                    WHERE ga.winner = TRUE
+                        AND sa.genre IS NOT NULL
+                    GROUP BY sa.genre, ga.year
+
+
+                    UNION ALL
+                    SELECT
+                        sa.genre,
+                        ga.year,
+                        COUNT(DISTINCT ga.award) AS grammy_wins
+                    FROM grammy_artists ga
+                    JOIN spotify_artists sa ON ga.artist_name = sa.artist_name
+                    WHERE ga.winner = TRUE
+                        AND sa.genre IS NOT NULL
+                    GROUP BY sa.genre, ga.year
+                  ) h
+                  GROUP BY genre,  year
+                  ORDER BY year ASC, grammy_wins DESC;
+                  `, 
+                    (err, data) => {
     if (err) {
-      // If there is an error for some reason, print the error message and
-      // return an empty object instead
       console.log(err);
-      // return type you may need to return an empty array [] instead.
-      res.json([]);
-    } else {res.json(
-        //return all the rows
-        data.rows);
+      res.json({});
+    } else {
+      res.json(data.rows);
     }
   });
 }
 
+//Route 9: GET /billboard/artists
+//Used in _____
+const billboard_artists = async function(req, res) {
+/*
+ * This evaluates each artists’ Billboard success by combining their total chart appearances with a 
+ * normalized ranking score. This allows for a fair comparison between artists based on consistency 
+ * and chart performance quality.
+ */
+
+  connection.query(`SELECT
+                    a.artist_name,
+                    COUNT(DISTINCT b.week_ending_date) AS total_entries,
+                    SUM(101 - current_rank) / COUNT(DISTINCT b.week_ending_date) AS normalized_score
+                  FROM billboard_chart b
+                  JOIN spotify_artists a ON b.artist_id = a.artist_id
+                  GROUP BY a.artist_name
+                  ORDER BY total_entries DESC, normalized_score DESC;`, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
+// Route 10: GET /billboard/trending_songs - Lexi Implement Route
+//Used in Home/Overview Page
+const billboard_trending_songs = async function(req, res) {
+  /*
+   * Retrieves the most recent Billboard chart entries as of 2025 along with their current ranking 
+   * and associated artists to highlight currently trending songs. This provides the user with a 
+   * snapshot of what songs are popular right now. 
+   */
+
+  connection.query(`SELECT DISTINCT
+                      s.song_name,
+                      STRING_AGG(DISTINCT sa.artist_name, ', '),
+                      b.current_rank,
+                      b.week_ending_date
+                    FROM billboard_chart b
+                    JOIN spotify_songs s ON b.song_name = s.song_name
+                    JOIN spotify_artists sa ON b.artist_id = sa.artist_id
+                    WHERE b.week_ending_date = (SELECT MAX(b2.week_ending_date) FROM billboard_chart b2)
+                    GROUP BY s.song_name, b.current_rank, b.week_ending_date
+                    ORDER BY b.current_rank ASC;`, 
+    (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      //I think this is the correct way to return multiple rows
+      res.json(data.rows);
+    }
+  });
+}
+
+
+
+
+//make sure to add functions to module exports here
 module.exports = {
-  author,
-  random,
-  song,
-  album,
-  albums,
-  album_songs,
-  top_songs,
-  top_albums,
-  search_songs,
-  entrance_songs
+  billboard_trending_songs,
+  billboard_artists,
+  grammys_genres
 }
