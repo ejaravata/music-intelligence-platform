@@ -22,8 +22,29 @@ connection.connect((err) => err && console.log(err));
  * GROUP 4 PROJECT ROUTES *
  ******************/
 
-//Route 7: GET /billboard/genre_popularity_over_time
-//Used in 
+//Route 1: GET /songs/search?q={song_name}
+//Used in search and recommendation page
+const search_by_song_name = async function(req, res) {
+  // TODO (TASK 7): implement a route that given an album_id, returns all songs on that album ordered by track number (ascending)
+  //get variable/id chosen
+  const chosen_song = req.params.song_name;
+
+  //right now this only brings up song name and id - need to implement other elements later
+  connection.query(`SELECT
+                        s.song_id,
+                        s.song_name
+                    FROM spotify_songs s
+                    WHERE s.song_name ILIKE '%' || $1 || '%'
+                    LIMIT 10;`, [chosen_song],
+                    (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
 
 //Route 8: GET /grammys/genres
 //Used in _____
@@ -150,5 +171,6 @@ const billboard_trending_songs = async function(req, res) {
 module.exports = {
   billboard_trending_songs,
   billboard_artists,
-  grammys_genres
+  grammys_genres,
+  search_by_song_name
 }
