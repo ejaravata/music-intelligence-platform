@@ -164,13 +164,450 @@ const billboard_trending_songs = async function(req, res) {
   });
 }
 
+// Route 12: GET /user/top_genres
+//List of top genres for a given user
+const user_top_genres = async function(req, res) {
+  const user_id = req.params.user_id;
+ 
+  const query = `
+    SELECT
+      aa.genre,
+      ss.subgenre,
+      COUNT(DISTINCT uf.spotify_id) AS num_favorites
+    FROM user_favorites uf
+    JOIN audio_attributes aa ON uf.spotify_id = aa.song_id
+    JOIN songs_subgenres ss ON uf.spotify_id = ss.song_id
+    WHERE user_id = $1
+      AND ss.subgenre IS NOT NULL
+    GROUP BY aa.genre, ss.subgenre
+    ORDER BY num_favorites DESC;
+  `;
+  connection.query(query, [user_id], (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      console.log(data.rows);
+      res.json(data.rows);
+    }
+  });
+}
+
+// Route 13: GET /user/top_albums
+//List of top albums for a given user
+const user_top_albums = async function(req, res){
+  const page = parseInt(req.query.page ?? '1');
+  const pageSize = Math.min(parseInt(req.query.page_size ?? '10'), 50);
+  const user_id = req.params.user_id;
+  
+  if(!page || page < 1){
+    let query = `
+      SELECT
+        row_number() over (ORDER BY COUNT(DISTINCT s.song_id) DESC) AS row_number,
+        a.album_name,
+        COUNT(DISTINCT u.spotify_id) AS saved_count
+      FROM user_favorites u
+      JOIN spotify_songs s
+        ON u.spotify_id = s.song_id
+      JOIN album a
+        ON s.album_id = a.album_id
+      WHERE u.user_id = $1
+      GROUP BY a.album_name
+      ORDER BY saved_count DESC;
+    `;
+
+    connection.query(query, [user_id], (err, data) => {
+      if(err){
+        console.log(err);
+        res.json([]);
+      }else{
+        res.json(data.rows);
+      }
+    });
+  }else{
+    const offset = (page - 1) * pageSize;
+
+    let query = `
+      SELECT
+        row_number() over (ORDER BY COUNT(DISTINCT u.spotify_id) DESC) AS row_number,
+        a.album_name,
+        COUNT(DISTINCT u.spotify_id) AS saved_count
+      FROM user_favorites u
+      JOIN spotify_songs s
+        ON u.spotify_id = s.song_id
+      JOIN album a
+        ON s.album_id = a.album_id
+      WHERE u.user_id = $1
+      GROUP BY a.album_name
+      ORDER BY saved_count DESC
+      LIMIT $2
+      OFFSET $3
+    `;
+
+    connection.query(query, [user_id, pageSize, offset], (err, data) => {
+      if(err){
+        console.log(err);
+        res.json([]);
+      }else{
+        res.json(data.rows);
+      }
+    });
+  }
+}
+
+// Route 14: GET /user/top_artists
+//List of top artists for a given user
+const user_top_artists = async function(req, res){
+  const page = parseInt(req.query.page ?? '1');
+  const pageSize = Math.min(parseInt(req.query.page_size ?? '10'), 50);
+  const user_id = req.params.user_id;
+  
+  if(!page || page < 1){
+    let query = `
+      SELECT
+        row_number() over (ORDER BY COUNT(DISTINCT s.song_id) DESC) AS row_number,
+        sa.artist_name,
+        COUNT(DISTINCT s.song_id) AS saved_count
+      FROM user_favorites u
+      JOIN spotify_songs s
+        ON u.spotify_id = s.song_id
+      JOIN public.featured_in fi
+        ON s.song_id = fi.song_id
+      JOIN public.spotify_artists sa
+        ON fi.artist_id = sa.artist_id
+      WHERE u.user_id = $1
+      GROUP BY sa.artist_name
+      ORDER BY saved_count DESC;
+    `;
+
+    connection.query(query, [user_id], (err, data) => {
+      if(err){
+        console.log(err);
+        res.json([]);
+      }else{
+        res.json(data.rows);
+      }
+    });
+  }else{
+    const offset = (page - 1) * pageSize;
+
+    let query = `
+      SELECT
+        row_number() over (ORDER BY COUNT(DISTINCT s.song_id) DESC) AS row_number,
+        sa.artist_name,
+        COUNT(DISTINCT s.song_id) AS saved_count
+      FROM user_favorites u
+      JOIN spotify_songs s
+        ON u.spotify_id = s.song_id
+      JOIN public.featured_in fi
+        ON s.song_id = fi.song_id
+      JOIN public.spotify_artists sa
+        ON fi.artist_id = sa.artist_id
+      WHERE u.user_id = $1
+      GROUP BY sa.artist_name
+      ORDER BY saved_count DESC
+      LIMIT $2
+      OFFSET $3
+    `;
+
+    connection.query(query,[user_id, pageSize, offset], (err, data) => {
+      if(err){
+        console.log(err);
+        res.json([]);
+      }else{
+        res.json(data.rows);
+      }
+    });
+  }
+}
+
+// Route 15: GET /user/favorite_songs
+//List of favorite songs for a given user ordered by date added (desc)
+const user_favorite_songs = async function(req, res){
+  const page = parseInt(req.query.page ?? '1');
+  const pageSize = Math.min(parseInt(req.query.page_size ?? '10'), 50);
+  const user_id = req.params.user_id;
+  
+  if(!page || page < 1){
+    let query = `
+      SELECT
+        row_number() over (ORDER BY u.date_added DESC) AS row_number,
+        s.song_name,
+        STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
+        a.album_name,
+        u.date_added
+      FROM user_favorites u
+      JOIN spotify_songs s
+        ON u.spotify_id = s.song_id
+      JOIN album a
+        ON s.album_id = a.album_id
+      JOIN public.featured_in fi
+        ON s.song_id = fi.song_id
+      JOIN public.spotify_artists sa
+        ON fi.artist_id = sa.artist_id
+      WHERE u.user_id = $1
+      GROUP BY s.song_id, s.song_name, a.album_name, u.date_added
+      ORDER BY u.date_added DESC
+    `;
+
+    connection.query(query, [user_id], (err, data) => {
+      if(err){
+        console.log(err);
+        res.json([]);
+      }else{
+        res.json(data.rows);
+      }
+    });
+  }else{
+    const offset = Math.max((page - 1) * pageSize, 0);
+
+    let query = `
+      SELECT
+        row_number() over (ORDER BY u.date_added DESC) AS row_number,
+        s.song_name,
+        STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
+        a.album_name,
+        u.date_added
+      FROM user_favorites u
+      JOIN spotify_songs s
+        ON u.spotify_id = s.song_id
+      JOIN album a
+        ON s.album_id = a.album_id
+      JOIN public.featured_in fi
+        ON s.song_id = fi.song_id
+      JOIN public.spotify_artists sa
+        ON fi.artist_id = sa.artist_id
+      WHERE u.user_id = $1
+      GROUP BY s.song_id, s.song_name, a.album_name, u.date_added
+      ORDER BY u.date_added DESC
+      LIMIT $2
+      OFFSET $3
+    `;
+
+    connection.query(query, [user_id, pageSize, offset], (err, data) => {
+      if(err){
+        console.log(err);
+        res.json([]);
+      }else{
+        res.json(data.rows);
+      }
+    });
+  }
+}
 
 
+// Route 16: GET /user/most_energetic_songs
+//Top 10 most energetic songs for a given user
+const user_most_energetic_songs = async function(req, res) {
+  const user_id = req.params.user_id;
+ 
+  const query = `
+    SELECT
+      s.song_name,
+      STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
+      aa.energy
+    FROM user_favorites u
+    JOIN spotify_songs s
+      ON u.spotify_id = s.song_id
+    JOIN public.featured_in fi
+      ON s.song_id = fi.song_id
+    JOIN public.spotify_artists sa
+      ON fi.artist_id = sa.artist_id
+    JOIN audio_attributes aa
+      ON s.song_id = aa.song_id
+    WHERE u.user_id = $1
+    GROUP BY s.song_id, s.song_name, aa.energy
+    ORDER BY aa.energy DESC
+    LIMIT 10;
+  `;
+  connection.query(query, [user_id], (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      console.log(data.rows);
+      res.json(data.rows);
+    }
+  });
+}
+
+// Route 17: GET /user/most_sad_songs
+//Top 10 most sad songs for a given user
+const user_most_sad_songs = async function(req, res) {
+  const user_id = req.params.user_id;
+ 
+  const query = `
+    SELECT
+      s.song_name,
+      STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
+      aa.valence
+    FROM user_favorites u
+    JOIN spotify_songs s
+      ON u.spotify_id = s.song_id
+    JOIN public.featured_in fi
+      ON s.song_id = fi.song_id
+    JOIN public.spotify_artists sa
+      ON fi.artist_id = sa.artist_id
+    JOIN audio_attributes aa
+      ON s.song_id = aa.song_id
+    WHERE u.user_id = $1
+    GROUP BY s.song_id, s.song_name, aa.valence
+    ORDER BY aa.valence ASC
+    LIMIT 10;
+  `;
+  connection.query(query, [user_id], (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      console.log(data.rows);
+      res.json(data.rows);
+    }
+  });
+}
+
+// Route 18: GET /user/music_profile
+//Combined endpoint that returns everything in one call instead of 6 separate calls
+const user_music_profile = async function(req, res) {
+  const user_id = req.params.user_id;
+
+  try {
+    const topGenresQuery = `
+      SELECT aa.genre, ss.subgenre, COUNT(DISTINCT uf.spotify_id) AS count
+      FROM user_favorites uf
+      JOIN audio_attributes aa ON uf.spotify_id = aa.song_id
+      JOIN songs_subgenres ss ON uf.spotify_id = ss.song_id
+      WHERE uf.user_id = $1 AND ss.subgenre IS NOT NULL
+      GROUP BY aa.genre, ss.subgenre
+      ORDER BY count DESC
+      LIMIT 10;
+    `;
+
+    const topArtistsQuery = `
+      SELECT sa.artist_name, COUNT(DISTINCT u.spotify_id) AS count
+      FROM user_favorites u
+      JOIN spotify_songs s ON u.spotify_id = s.song_id
+      JOIN featured_in fi ON s.song_id = fi.song_id
+      JOIN spotify_artists sa ON fi.artist_id = sa.artist_id
+      WHERE u.user_id = $1
+      GROUP BY sa.artist_name
+      ORDER BY count DESC
+      LIMIT 10;
+    `;
+
+    const topAlbumsQuery = `
+      SELECT a.album_name, COUNT(DISTINCT u.spotify_id) AS count
+      FROM user_favorites u
+      JOIN spotify_songs s ON u.spotify_id = s.song_id
+      JOIN album a ON s.album_id = a.album_id
+      WHERE u.user_id = $1
+      GROUP BY a.album_name
+      ORDER BY count DESC
+      LIMIT 10;
+    `;
+
+    const recentSongsQuery = `
+      SELECT
+        s.song_name,
+        STRING_AGG(DISTINCT sa.artist_name, ', ') AS artists,
+        a.album_name,
+        u.date_added
+      FROM user_favorites u
+      JOIN spotify_songs s ON u.spotify_id = s.song_id
+      JOIN album a ON s.album_id = a.album_id
+      JOIN featured_in fi ON s.song_id = fi.song_id
+      JOIN spotify_artists sa ON fi.artist_id = sa.artist_id
+      WHERE u.user_id = $1
+      GROUP BY s.song_id, s.song_name, a.album_name, u.date_added
+      ORDER BY u.date_added DESC
+      LIMIT 10;
+    `;
+
+    const energeticQuery = `
+      SELECT
+        s.song_name,
+        STRING_AGG(DISTINCT sa.artist_name, ', ') AS artists,
+        aa.energy
+      FROM user_favorites u
+      JOIN spotify_songs s ON u.spotify_id = s.song_id
+      JOIN featured_in fi ON s.song_id = fi.song_id
+      JOIN spotify_artists sa ON fi.artist_id = sa.artist_id
+      JOIN audio_attributes aa ON s.song_id = aa.song_id
+      WHERE u.user_id = $1
+      GROUP BY s.song_id, s.song_name, aa.energy
+      ORDER BY aa.energy DESC
+      LIMIT 10;
+    `;
+
+    const sadQuery = `
+      SELECT
+        s.song_name,
+        STRING_AGG(DISTINCT sa.artist_name, ', ') AS artists,
+        aa.valence
+      FROM user_favorites u
+      JOIN spotify_songs s ON u.spotify_id = s.song_id
+      JOIN featured_in fi ON s.song_id = fi.song_id
+      JOIN spotify_artists sa ON fi.artist_id = sa.artist_id
+      JOIN audio_attributes aa ON s.song_id = aa.song_id
+      WHERE u.user_id = $1
+      GROUP BY s.song_id, s.song_name, aa.valence
+      ORDER BY aa.valence ASC
+      LIMIT 10;
+    `;
+
+    const summaryQuery = `
+      SELECT
+        COUNT(*) AS total_songs,
+        COUNT(DISTINCT spotify_id) AS unique_songs
+      FROM user_favorites
+      WHERE user_id = $1;
+    `;
+
+    const [
+      topGenres,
+      topArtists,
+      topAlbums,
+      recentSongs,
+      energeticSongs,
+      sadSongs,
+      summary
+    ] = await Promise.all([
+      connection.query(topGenresQuery, [user_id]),
+      connection.query(topArtistsQuery, [user_id]),
+      connection.query(topAlbumsQuery, [user_id]),
+      connection.query(recentSongsQuery, [user_id]),
+      connection.query(energeticQuery, [user_id]),
+      connection.query(sadQuery, [user_id]),
+      connection.query(summaryQuery, [user_id])
+    ]);
+
+    res.json({
+      top_genres: topGenres.rows,
+      top_artists: topArtists.rows,
+      top_albums: topAlbums.rows,
+      recent_songs: recentSongs.rows,
+      most_energetic: energeticSongs.rows,
+      most_sad: sadSongs.rows,
+      summary: summary.rows[0]
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch user profile" });
+  }
+};
 
 //make sure to add functions to module exports here
 module.exports = {
   billboard_trending_songs,
   billboard_artists,
   grammys_genres,
-  search_by_song_name
+  search_by_song_name,
+  user_top_genres,
+  user_top_albums,
+  user_top_artists,
+  user_favorite_songs,
+  user_most_energetic_songs,
+  user_most_sad_songs,
+  user_music_profile
 }
