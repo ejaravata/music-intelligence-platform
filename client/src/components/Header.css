@@ -1,0 +1,151 @@
+.header {
+  display: grid;
+  grid-template-columns: 1fr minmax(240px, 480px) 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.site-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.menu-toggle {
+  display: inline-flex;
+  flex: 0 0 42px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 42px;
+  width: 42px;
+  min-height: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-left: -10px;
+}
+
+.menu-toggle-line {
+  display: block;
+  width: 18px;
+  height: 2px;
+  margin: 0 auto;
+  background: white;
+}
+
+.main-search-bar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.main-search-bar-input {
+  flex: 1;
+  padding: 10px 20px;
+  border: 1px solid white;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-family: 'Montserrat', sans-serif;
+  color: white;
+}
+
+.search-filter-dropdown {
+  padding: 10px 14px;
+  border: 1px solid white;
+  border-radius: 6px;
+  background: #1f2937;
+  color: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-filter-dropdown:hover {
+  border-color: #a0aec0;
+}
+
+.search-filter-dropdown:focus {
+  outline: none;
+  border-color: white;
+}
+
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-trigger {
+  padding: 10px 14px;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: black;
+  color: white;
+  font-size: 0.95rem;
+  font-family: 'Montserrat', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.dropdown-trigger:hover {
+  border-color: white;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: black;
+  border: 1px solid #555;
+  z-index: 10;
+  min-width: 120px;
+}
+
+.dropdown-item {
+  padding: 10px 14px;
+  color: #aaa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #333;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: #1a1a1a;
+  color: white;
+}
+
+.dropdown-item.active {
+  background: #333;
+  color: white;
+  border-left: 3px solid white;
+  padding-left: 11px;
+}
+
+.current-user {
+  justify-self: end;
+  font-weight: 600;
+}
