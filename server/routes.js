@@ -333,14 +333,45 @@ const grammys_genres = async function(req, res) {
 
 //Route 8b: GET /grammys/top_winning_artists
 const grammys_top_artists = async function(req, res) {
-  // Gets top 10 artists by number of Grammys won
+  // Gets top 10 artists by number of Grammys won, but only artist, song, or album awards (no performances, 
+  // music videos, and stuff like that.
 
   connection.query(`
     SELECT
       artist_name,
-      COUNT(*) AS grammy_wins
-    FROM grammy_songs
-    WHERE winner = TRUE and LOWER(artist_name) <> 'not available'
+      SUM(grammy_wins) AS grammy_wins
+    FROM (
+      SELECT
+        gs.artist_name,
+        COUNT(*) AS grammy_wins
+      FROM grammy_songs gs
+      WHERE gs.winner = TRUE
+        AND gs.artist_name IS NOT NULL
+        AND LOWER(gs.artist_name) <> 'not available'
+      GROUP BY gs.artist_name
+
+      UNION ALL
+
+      SELECT
+        ga.artist_name,
+        COUNT(*) AS grammy_wins
+      FROM grammy_albums ga
+      WHERE ga.winner = TRUE
+        AND ga.artist_name IS NOT NULL
+        AND LOWER(ga.artist_name) <> 'not available'
+      GROUP BY ga.artist_name
+
+      UNION ALL
+
+      SELECT
+        ga.artist_name,
+        COUNT(*) AS grammy_wins
+      FROM grammy_artists ga
+      WHERE ga.winner = TRUE
+        AND ga.artist_name IS NOT NULL
+        AND LOWER(ga.artist_name) <> 'not available'
+      GROUP BY ga.artist_name
+    ) h
     GROUP BY artist_name
     ORDER BY grammy_wins DESC, artist_name ASC
     LIMIT 10;
@@ -357,7 +388,9 @@ const grammys_top_artists = async function(req, res) {
 
 //Route 8c: GET /grammys/top_winning_genres
 const grammys_top_genres = async function(req, res) {
-  // Gets top 10 genres by number of Grammys won
+  // Gets top 10 genres by number of Grammys won, but only artist, song, or album awards (no performances, 
+  // music videos, and stuff like that.
+
 
   connection.query(`
     SELECT
