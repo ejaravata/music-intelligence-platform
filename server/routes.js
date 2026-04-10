@@ -361,15 +361,42 @@ const grammys_top_genres = async function(req, res) {
 
   connection.query(`
     SELECT
-      sa.genre,
-      COUNT(*) AS grammy_wins
-    FROM grammy_songs gs
-      JOIN spotify_artists sa ON gs.artist_name = sa.artist_name
-    WHERE gs.winner = TRUE
-      AND sa.genre IS NOT NULL
-    GROUP BY sa.genre
-    ORDER BY grammy_wins DESC, sa.genre ASC
-    LIMIT 10;
+      genre,
+      SUM(grammy_wins) AS grammy_wins
+    FROM (
+        SELECT
+          aa.genre,
+          COUNT(DISTINCT gs.award) AS grammy_wins
+        FROM grammy_songs gs
+            JOIN spotify_songs s ON gs.song_title = s.song_name
+            JOIN audio_attributes aa ON s.song_id = aa.song_id
+        WHERE gs.winner = TRUE
+          AND aa.genre IS NOT NULL
+        GROUP BY aa.genre
+
+        UNION ALL
+        SELECT
+          sa.genre,
+          COUNT(DISTINCT ga.award) AS grammy_wins
+        FROM grammy_albums ga
+            JOIN album a ON ga.album_title = a.album_name
+            JOIN spotify_artists sa ON a.artist_id = sa.artist_id
+        WHERE ga.winner = TRUE
+          AND sa.genre IS NOT NULL
+        GROUP BY sa.genre
+
+        UNION ALL
+        SELECT
+          sa.genre,
+          COUNT(DISTINCT ga.award) AS grammy_wins
+        FROM grammy_artists ga
+            JOIN spotify_artists sa ON ga.artist_name = sa.artist_name
+        WHERE ga.winner = TRUE
+          AND sa.genre IS NOT NULL
+        GROUP BY sa.genre
+    ) h
+    GROUP BY genre
+    ORDER BY grammy_wins DESC;
   `, 
   (err, data) => {
     if (err) {
