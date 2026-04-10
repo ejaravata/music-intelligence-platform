@@ -12,7 +12,11 @@ app.use(cors({
 // provide their handlers that we implemented in routes.js
 app.get('/billboard/trending_songs', routes.billboard_trending_songs);
 app.get('/billboard/artists', routes.billboard_artists);
+app.get('/billboard/annual_top_songs', routes.billboard_top_five);
+app.get('/billboard/genre_popularity_over_time', routes.billboard_genre_trends);
 app.get('/grammys/genres', routes.grammys_genres);
+app.get('/grammys/top_winning_artists', routes.grammys_top_artists);
+app.get('/grammys/top_winning_genres', routes.grammys_top_genres);
 app.get('/songs/search?q={song_name}', routes.search_by_song_name);
 app.get('/songs/:song_id/recommendations/genres', routes.recs_from_genres);
 app.get('/songs/:song_id/recommendations/audio_attributes', routes.recs_from_audio_attributes);
