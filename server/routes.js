@@ -341,36 +341,36 @@ const grammys_top_artists = async function(req, res) {
       artist_name,
       SUM(grammy_wins) AS grammy_wins
     FROM (
-      SELECT
-        gs.artist_name,
-        COUNT(*) AS grammy_wins
-      FROM grammy_songs gs
-      WHERE gs.winner = TRUE
-        AND gs.artist_name IS NOT NULL
-        AND LOWER(gs.artist_name) <> 'not available'
-      GROUP BY gs.artist_name
+        SELECT
+          gs.artist_name,
+          COUNT(*) AS grammy_wins
+        FROM grammy_songs gs
+        WHERE gs.winner = TRUE
+          AND gs.artist_name IS NOT NULL
+          AND LOWER(gs.artist_name) <> 'not available'
+        GROUP BY gs.artist_name
 
-      UNION ALL
+        UNION ALL
 
-      SELECT
-        ga.artist_name,
-        COUNT(*) AS grammy_wins
-      FROM grammy_albums ga
-      WHERE ga.winner = TRUE
-        AND ga.artist_name IS NOT NULL
-        AND LOWER(ga.artist_name) <> 'not available'
-      GROUP BY ga.artist_name
+        SELECT
+          ga.artist_name,
+          COUNT(*) AS grammy_wins
+        FROM grammy_albums ga
+        WHERE ga.winner = TRUE
+          AND ga.artist_name IS NOT NULL
+          AND LOWER(ga.artist_name) <> 'not available'
+        GROUP BY ga.artist_name
 
-      UNION ALL
+        UNION ALL
 
-      SELECT
-        ga.artist_name,
-        COUNT(*) AS grammy_wins
-      FROM grammy_artists ga
-      WHERE ga.winner = TRUE
-        AND ga.artist_name IS NOT NULL
-        AND LOWER(ga.artist_name) <> 'not available'
-      GROUP BY ga.artist_name
+        SELECT
+          ga.artist_name,
+          COUNT(*) AS grammy_wins
+        FROM grammy_artists ga
+        WHERE ga.winner = TRUE
+          AND ga.artist_name IS NOT NULL
+          AND LOWER(ga.artist_name) <> 'not available'
+        GROUP BY ga.artist_name
     ) h
     GROUP BY artist_name
     ORDER BY grammy_wins DESC, artist_name ASC
@@ -408,6 +408,7 @@ const grammys_top_genres = async function(req, res) {
         GROUP BY aa.genre
 
         UNION ALL
+        
         SELECT
           sa.genre,
           COUNT(DISTINCT ga.award) AS grammy_wins
@@ -419,6 +420,7 @@ const grammys_top_genres = async function(req, res) {
         GROUP BY sa.genre
 
         UNION ALL
+        
         SELECT
           sa.genre,
           COUNT(DISTINCT ga.award) AS grammy_wins
