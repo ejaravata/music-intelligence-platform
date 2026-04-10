@@ -217,7 +217,7 @@ const recs_from_audio_attributes = async function(req, res) {
     SELECT
       s.song_id,
       s.song_name,
-      STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artist_names,
+      STRING_AGG(DISTINCT sa.artist_name, ', ') AS artist_names,
       n.genre,
       n.popularity,
       n.distance
