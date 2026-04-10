@@ -46,6 +46,164 @@ const search_by_song_name = async function(req, res) {
   });
 }
 
+//Route 4: GET /songs/:song_id/recommendations/genres
+const recs_from_genres = async function(req, res) {
+/* Returns songs and corresponding artists with similar genres as well as subset of subgenres to the Spotify
+ * ID the current user inputs. This will sort the queried results by the popularity and subgenres to show the 
+ * most relevant songs with a shared subset of subgenres.
+ */
+  const song_id = req.params.song_id;
+  
+  connection.query(`
+    WITH wanted_song AS (
+      SELECT
+        s.song_name,
+        STRING_AGG(DISTINCT sa.artist_name, ', ') AS artist_names
+      FROM spotify_songs s
+        JOIN featured_in f ON s.song_id = f.song_id
+        JOIN spotify_artists sa ON f.artist_id = sa.artist_id
+      WHERE s.song_id = $1
+      GROUP BY s.song_name
+    ),
+    wanted_subgenres AS (
+      SELECT subgenre
+      FROM songs_subgenres
+      WHERE song_id = $1
+    ),
+    candidate_songs AS (
+      SELECT
+        s.song_id,
+        s.song_name,
+        aa.genre,
+        aa.popularity,
+        COUNT(DISTINCT ss.subgenre) AS shared_subgenre_count,
+        STRING_AGG(DISTINCT ss.subgenre, ', ') AS shared_subgenres
+      FROM songs_subgenres ss
+        JOIN wanted_subgenres ws ON ss.subgenre = ws.subgenre
+        JOIN spotify_songs s ON s.song_id = ss.song_id
+        JOIN audio_attributes aa ON aa.song_id = s.song_id
+      WHERE ss.song_id <> $1
+      GROUP BY
+        s.song_id,
+        s.song_name,
+        aa.genre,
+        aa.popularity
+      ORDER BY shared_subgenre_count DESC, aa.popularity DESC
+      LIMIT 100
+    ),
+    final_songs AS (
+      SELECT
+        cs.song_id,
+        cs.song_name,
+        STRING_AGG(DISTINCT sa.artist_name, ', ') AS artist_names,
+        cs.genre,
+        cs.popularity,
+        cs.shared_subgenre_count,
+        cs.shared_subgenres
+      FROM candidate_songs cs
+        JOIN featured_in f ON cs.song_id = f.song_id
+        JOIN spotify_artists sa ON sa.artist_id = f.artist_id
+      GROUP BY
+        cs.song_id,
+        cs.song_name,
+        cs.genre,
+        cs.popularity,
+        cs.shared_subgenre_count,
+        cs.shared_subgenres
+    ),
+    deduped_songs AS (
+      SELECT
+        fs.*,
+        ROW_NUMBER() OVER (
+          PARTITION BY fs.song_name, fs.artist_names
+          ORDER BY fs.shared_subgenre_count DESC, fs.popularity DESC, fs.song_id
+        ) AS rn
+      FROM final_songs fs
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM wanted_song ws
+        WHERE ws.song_name = fs.song_name
+          AND ws.artist_names = fs.artist_names
+      )
+    )
+    SELECT
+      song_id,
+      song_name,
+      artist_names,
+      genre,
+      popularity,
+      shared_subgenre_count,
+      shared_subgenres
+    FROM deduped_songs
+    WHERE rn = 1
+    ORDER BY shared_subgenre_count DESC, popularity DESC
+    LIMIT 10;
+  `, [song_id],
+    (err, data) => {
+      if (err) {
+      console.log(err);
+      res.json([]);
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
+//Route 5: GET /songs/:song_id/recommendations/audio_attributes
+const recs_from_audio_attributes = async function(req, res) {
+/* Returns top 10 recommended songs whose audio features are most similar to the input song. Similarity 
+ * is computed using cosine distance and a pgvector embedding of audio attributes, including  
+ * danceability, valence, and tempo, as well as additional features such as popularity.
+ */
+  const song_id = req.params.song_id;
+  
+  connection.query(`
+    WITH wanted_song AS (
+      SELECT embedding
+      FROM audio_attributes
+      WHERE song_id = $1
+    ),
+    nearest_songs AS (
+      SELECT
+        aa.song_id,
+        aa.genre,
+        aa.popularity,
+        ROUND((aa.embedding <=> w.embedding)::numeric, 7) AS distance
+      FROM audio_attributes aa
+      CROSS JOIN wanted_song w
+      WHERE aa.song_id <> $1
+      ORDER BY distance ASC
+      LIMIT 10
+    )
+    SELECT
+      s.song_id,
+      s.song_name,
+      STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artist_names,
+      n.genre,
+      n.popularity,
+      n.distance
+    FROM nearest_songs n
+      JOIN spotify_songs s ON n.song_id = s.song_id
+      JOIN featured_in f ON s.song_id = f.song_id
+      JOIN spotify_artists sa ON f.artist_id = sa.artist_id
+    GROUP BY
+      s.song_id,
+      s.song_name,
+      n.genre,
+      n.popularity,
+      n.distance
+    ORDER BY n.distance ASC;
+  `, [song_id],
+    (err, data) => {
+      if (err) {
+      console.log(err);
+      res.json([]);
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
 //Route 8: GET /grammys/genres
 //Used in _____
 const grammys_genres = async function(req, res) {
@@ -609,5 +767,7 @@ module.exports = {
   user_favorite_songs,
   user_most_energetic_songs,
   user_most_sad_songs,
-  user_music_profile
+  user_music_profile,
+  recs_from_audio_attributes,
+  recs_from_genres
 }
