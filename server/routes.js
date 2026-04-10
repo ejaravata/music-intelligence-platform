@@ -46,6 +46,45 @@ const search_by_song_name = async function(req, res) {
   });
 }
 
+//Route 2: GET /billboard/annual_top_songs
+const billboard_top_five = async function(req, res) {
+/* Returns the top ranked five songs with the most billboard appearances per year. In addition, this will
+ * also return the amount of appearances each song had over each timeframe.
+ */
+
+  connection.query(`
+    WITH yearly_song_appearances AS (
+      SELECT
+          EXTRACT(YEAR FROM bc.week_ending_date)::INT AS year,
+          bc.song_name,
+          COUNT(*) AS appearances,
+          ROW_NUMBER() OVER (
+              PARTITION BY EXTRACT(YEAR FROM bc.week_ending_date)
+              ORDER BY COUNT(*) DESC, bc.song_name ASC
+              ) AS rn
+      FROM billboard_chart bc
+      GROUP BY
+          EXTRACT(YEAR FROM bc.week_ending_date),
+          bc.song_name
+    )
+    SELECT
+        year,
+        song_name,
+        appearances
+    FROM yearly_song_appearances
+    WHERE rn <= 5
+    ORDER BY year ASC, appearances DESC, song_name ASC;
+  `, 
+  (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
 //Route 4: GET /songs/:song_id/recommendations/genres
 const recs_from_genres = async function(req, res) {
 /* Returns songs and corresponding artists with similar genres as well as subset of subgenres to the Spotify
@@ -204,6 +243,33 @@ const recs_from_audio_attributes = async function(req, res) {
   });
 }
 
+//Route 7: GET /billboard/genre_popularity_over_time
+const billboard_genre_trends = async function(req, res) {
+/* Tracks how each subgenre’s popularity changes over time using a normalized Billboard score based on
+ * chart rankings. This showcases the visualization of rising and declining genre trends over time.
+ */
+
+  connection.query(`
+    SELECT
+      b.week_ending_date,
+      a.genre,
+      SUM(101 - b.current_rank) / COUNT(*) AS normalized_popularity_score
+    FROM billboard_chart b
+         JOIN spotify_artists a ON b.artist_id = a.artist_id
+    WHERE a.genre IS NOT NULL
+    GROUP BY b.week_ending_date, a.genre
+    ORDER BY b.week_ending_date, normalized_popularity_score DESC;
+  `, 
+  (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
 //Route 8: GET /grammys/genres
 //Used in _____
 const grammys_genres = async function(req, res) {
@@ -256,6 +322,56 @@ const grammys_genres = async function(req, res) {
                   ORDER BY year ASC, grammy_wins DESC;
                   `, 
                     (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
+//Route 8b: GET /grammys/top_winning_artists
+const grammys_top_artists = async function(req, res) {
+  // Gets top 10 artists by number of Grammys won
+
+  connection.query(`
+    SELECT
+      artist_name,
+      COUNT(*) AS grammy_wins
+    FROM grammy_songs
+    WHERE winner = TRUE and LOWER(artist_name) <> 'not available'
+    GROUP BY artist_name
+    ORDER BY grammy_wins DESC, artist_name ASC
+    LIMIT 10;
+  `, 
+  (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
+//Route 8c: GET /grammys/top_winning_genres
+const grammys_top_genres = async function(req, res) {
+  // Gets top 10 genres by number of Grammys won
+
+  connection.query(`
+    SELECT
+      sa.genre,
+      COUNT(*) AS grammy_wins
+    FROM grammy_songs gs
+      JOIN spotify_artists sa ON gs.artist_name = sa.artist_name
+    WHERE gs.winner = TRUE
+      AND sa.genre IS NOT NULL
+    GROUP BY sa.genre
+    ORDER BY grammy_wins DESC, sa.genre ASC
+    LIMIT 10;
+  `, 
+  (err, data) => {
     if (err) {
       console.log(err);
       res.json({});
@@ -759,7 +875,11 @@ const user_music_profile = async function(req, res) {
 module.exports = {
   billboard_trending_songs,
   billboard_artists,
+  billboard_top_five,
+  billboard_genre_trends,
   grammys_genres,
+  grammys_top_artists,
+  grammys_top_genres,
   search_by_song_name,
   user_top_genres,
   user_top_albums,
