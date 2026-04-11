@@ -3,7 +3,7 @@
   "rds_port": "5432",
   "rds_user": "cis5500student",
   "rds_password": "Spring2026!?",
-  "rds_db": "database-cis5500-finalproject",
+  "rds_db": "music_db",
   "server_host": "localhost",
   "server_port": "8080"
 }

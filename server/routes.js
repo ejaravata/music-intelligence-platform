@@ -27,7 +27,7 @@ connection.connect((err) => err && console.log(err));
 const search_by_song_name = async function(req, res) {
   // TODO (TASK 7): implement a route that given an album_id, returns all songs on that album ordered by track number (ascending)
   //get variable/id chosen
-  const chosen_song = req.params.song_name;
+  const chosen_song = req.query.q;
 
   //right now this only brings up song name and id - need to implement other elements later
   connection.query(`SELECT
@@ -288,7 +288,7 @@ const grammys_genres = async function(req, res) {
                         COUNT(DISTINCT gs.award) AS grammy_wins
                     FROM grammy_songs gs
                     JOIN spotify_songs s ON gs.song_title = s.song_name
-                    JOIN audio_attributes aa ON s.spotify_id = aa.spotify_id
+                    JOIN audio_attributes aa ON s.song_id = aa.song_id
                     WHERE gs.winner = TRUE
                         AND aa.genre IS NOT NULL
                     GROUP BY aa.genre, gs.year
@@ -730,7 +730,6 @@ const user_favorite_songs = async function(req, res){
     });
   }
 }
-
 
 // Route 16: GET /user/most_energetic_songs
 //Top 10 most energetic songs for a given user
