@@ -5,8 +5,10 @@ export default function Header({
   siteName = "Site Name",
   username = "Username",
   searchPlaceholder = "Search...",
-  onMenuToggle
+  onMenuToggle,
+  onSearch
 }) {
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('Song');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const options = ['Song', 'Artist', 'Album', 'Genre'];
@@ -36,7 +38,15 @@ export default function Header({
           className="main-search-bar-input"
           type="search"
           placeholder={searchPlaceholder}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
+        <button
+          className="search-btn"
+          onClick={() => onSearch(searchQuery)}
+        >
+          SEARCH
+        </button>
         <div className="custom-dropdown">
           <button
             className="dropdown-trigger"

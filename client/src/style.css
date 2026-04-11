@@ -38,20 +38,16 @@ body {
   overflow-y: auto;
 }
 
-.grid-column h2 {
-  font-size: 18px;
-}
-
 .column-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  /* margin-bottom: 16px; */
 }
 
 .column-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
 }
 
 .nav-arrows {
