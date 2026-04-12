@@ -83,6 +83,27 @@
   background: black;
 }
 
+.year-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.year-slider {
+  flex: 1;
+  accent-color: white;
+  cursor: pointer;
+}
+
+.year-slider-label {
+  min-width: 52px;
+  text-align: right;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
 @media (max-width: 1000px) {
   .analytics-layout,
   .analytics-layout--collapsed {
