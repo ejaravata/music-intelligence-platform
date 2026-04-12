@@ -70,16 +70,16 @@ export default function Analytics() {
   const [topGenreData, setTopGenreData] = useState([]);
 
   const genreColors = [
-    "#00bcd4",
-    "#ff9800",
-    "#4caf50",
+    "#0058d4",
+    "#ee841b",
+    "#2b712d",
     "#e91e63",
     "#9c27b0",
-    "#f6e337",
+    "#fbec64",
     "#03a9f4",
     "#f44336",
-    "#8bc34a",
-    "#ffc107"
+    "#94db43",
+    "#dfb022"
   ];
 
   useEffect(() => {
@@ -143,6 +143,12 @@ export default function Analytics() {
     fontSize: "12px"
   };
 
+  const genreColorMap = Object.fromEntries(
+    topTrendGenres.map((genre, index) => [
+      genre,
+      genreColors[index % genreColors.length]
+    ])
+  );
   const cumulativeGenreData = topTrendGenres
     .map((genre) => {
       const cumulativeWins = genreHistoryRows
@@ -151,14 +157,11 @@ export default function Analytics() {
 
       return {
         genre,
-        wins: cumulativeWins
+        wins: cumulativeWins,
+        fill: genreColorMap[genre]
       };
     })
-    .sort((a, b) => b.wins - a.wins)
-    .map((entry, index) => ({
-      ...entry,
-      fill: genreColors[index % genreColors.length]
-    }));
+    .sort((a, b) => b.wins - a.wins);
 
   return (
     <div className="analytics-page">
