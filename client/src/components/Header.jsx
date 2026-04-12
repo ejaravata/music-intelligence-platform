@@ -6,7 +6,8 @@ export default function Header({
   username = "Username",
   searchPlaceholder = "Search...",
   onMenuToggle,
-  onSearch
+  onSearch = () => {},
+  showSearch = true
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('Song');
@@ -33,46 +34,51 @@ export default function Header({
       </div>
 
       {/* middle of header - search bar and filter */}
-      <div className="main-search-bar">
-        <input
-          className="main-search-bar-input"
-          type="search"
-          placeholder={searchPlaceholder}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <button
-          className="search-btn"
-          onClick={() => onSearch(searchQuery)}
-        >
-          SEARCH
-        </button>
-        <div className="custom-dropdown">
+      {showSearch ? (
+        <div className="main-search-bar">
+          <input
+            className="main-search-bar-input"
+            type="search"
+            placeholder={searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           <button
-            className="dropdown-trigger"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="search-btn"
+            onClick={() => onSearch(searchQuery, searchType)}
           >
-            {searchType}
-            <span className="dropdown-arrow">▼</span>
+            SEARCH
           </button>
-          {isDropdownOpen && (
-            <div className="dropdown-menu">
-              {options.map((option) => (
-                <div
-                  key={option}
-                  className={`dropdown-item ${option === searchType ? 'active' : ''}`}
-                  onClick={() => {
-                    setSearchType(option);
-                    setIsDropdownOpen(false);
-                  }}
-                >
-                  {option}
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="custom-dropdown">
+            <button
+              type="button"
+              className="dropdown-trigger"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            >
+              {searchType}
+              <span className="dropdown-arrow">▼</span>
+            </button>
+            {isDropdownOpen && (
+              <div className="dropdown-menu">
+                {options.map((option) => (
+                  <div
+                    key={option}
+                    className={`dropdown-item ${option === searchType ? 'active' : ''}`}
+                    onClick={() => {
+                      setSearchType(option);
+                      setIsDropdownOpen(false);
+                    }}
+                  >
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="header-spacer" />
+      )}
 
       {/* right of header - user */}
       <div className="current-user">{username}</div>
