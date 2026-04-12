@@ -5,27 +5,18 @@ import SideMenu from "../components/SideMenu.jsx";
 import Header from "../components/Header.jsx";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   BarChart,
   Bar
 } from "recharts";
 
-/* special tooltip for genre trend chart that sorts genres by value and
-only shows genres with non-zero wins */
-function CustomGenreTooltip({ active, payload, label }) {
+function CustomTopChartTooltip({ active, payload, label }) {
   if (!active || !payload || payload.length === 0) {
     return null;
   }
-
-  const sortedPayload = [...payload]
-    .filter((entry) => entry.value !== undefined && entry.value !== null)
-    .sort((a, b) => b.value - a.value);
 
   return (
     <div
@@ -47,31 +38,38 @@ function CustomGenreTooltip({ active, payload, label }) {
       >
         {label}
       </div>
-
-      {sortedPayload.map((entry) => (
-        <div
-          key={entry.dataKey}
-          style={{
-            color: entry.color,
-            marginBottom: "2px"
-          }}
-        >
-          {entry.dataKey}: {entry.value}
-        </div>
-      ))}
+      <div style={{ color: "#fff" }}>
+        Wins: {payload[0].value}
+      </div>
     </div>
+  );
+}
+
+function GenreBarShape(props) {
+  const { x, y, width, height, payload } = props;
+
+  return (
+    <rect
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      rx={6}
+      ry={6}
+      fill={payload.fill}
+    />
   );
 }
 
 export default function Analytics() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
-  const [genreTrendData, setGenreTrendData] = useState([]);
+  const [genreHistoryRows, setGenreHistoryRows] = useState([]);
   const [topTrendGenres, setTopTrendGenres] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(1959);
   const [topArtistData, setTopArtistData] = useState([]);
   const [topGenreData, setTopGenreData] = useState([]);
 
-  // colors for genres in line chart
-  const lineColors = [
+  const genreColors = [
     "#00bcd4",
     "#ff9800",
     "#4caf50",
@@ -90,12 +88,10 @@ export default function Analytics() {
       .then((data) => {
         const genreTotals = {};
 
-        /* formats data into structure for line chart:
-        we group by year and then have each genre as a separate key 
-        with # of wins as respective value */
         data.forEach((row) => {
-          genreTotals[row.genre] =
-            (genreTotals[row.genre] || 0) + Number(row.grammy_wins);
+          const genre = row.genre;
+          const wins = Number(row.grammy_wins);
+          genreTotals[genre] = (genreTotals[genre] || 0) + wins;
         });
 
         const topGenres = Object.entries(genreTotals)
@@ -103,31 +99,14 @@ export default function Analytics() {
           .slice(0, 10)
           .map(([genre]) => genre);
 
-        const groupedByYear = {};
-
-        data.forEach((row) => {
-          const year = Number(row.year);
-          const genre = row.genre;
-          const wins = Number(row.grammy_wins);
-
-          if (!topGenres.includes(genre)) return;
-
-          if (!groupedByYear[year]) {
-            groupedByYear[year] = { year };
-            topGenres.forEach((g) => {
-              groupedByYear[year][g] = 0;
-            });
-          }
-
-          groupedByYear[year][genre] = wins;
-        });
-
-        const formatted = Object.values(groupedByYear).sort(
-          (a, b) => a.year - b.year
-        );
-
         setTopTrendGenres(topGenres);
-        setGenreTrendData(formatted);
+        setGenreHistoryRows(
+          data.map((row) => ({
+            year: Number(row.year),
+            genre: row.genre,
+            grammy_wins: Number(row.grammy_wins)
+          }))
+        );
       })
       .catch((err) => console.log(err));
 
@@ -164,51 +143,102 @@ export default function Analytics() {
     fontSize: "12px"
   };
 
+  const cumulativeGenreData = topTrendGenres
+    .map((genre) => {
+      const cumulativeWins = genreHistoryRows
+        .filter((row) => row.genre === genre && row.year <= selectedYear)
+        .reduce((sum, row) => sum + row.grammy_wins, 0);
+
+      return {
+        genre,
+        wins: cumulativeWins
+      };
+    })
+    .sort((a, b) => b.wins - a.wins)
+    .map((entry, index) => ({
+      ...entry,
+      fill: genreColors[index % genreColors.length]
+    }));
+
   return (
     <div className="analytics-page">
       <Header
         siteName="Grammy Analytics"
         username="User"
-        searchPlaceholder="Search..."
+        showSearch={false}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
-        onSearch={(query) => console.log("Search query:", query)}
       />
 
-      <div className={`analytics-layout ${isSideMenuOpen ? "" : "analytics-layout--collapsed"}`}>
-        <div className={`side-menu-panel ${isSideMenuOpen ? "" : "side-menu-panel--collapsed"}`}>
+      <div
+        className={`analytics-layout ${
+          isSideMenuOpen ? "" : "analytics-layout--collapsed"
+        }`}
+      >
+        <div
+          className={`side-menu-panel ${
+            isSideMenuOpen ? "" : "side-menu-panel--collapsed"
+          }`}
+        >
           <SideMenu />
         </div>
 
         <main className="analytics-content">
           <div className="analytics-grid">
             <div className="analytics-card analytics-card--wide">
-              <h2>Grammy Genre Popularity Over Time</h2>
+              <h2>
+                Genre Popularity Over Time (Total Wins From 1959 - {selectedYear})
+              </h2>
+
+              <div className="year-slider-wrapper">
+                <input
+                  type="range"
+                  min="1959"
+                  max="2024"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="year-slider"
+                />
+                <div className="year-slider-label">{selectedYear}</div>
+              </div>
+
               <div className="chart-wrapper">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={genreTrendData}>
+                  <BarChart
+                    data={cumulativeGenreData}
+                    layout="vertical"
+                    margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                     <XAxis
-                      dataKey="year"
+                      type="number"
                       stroke="#fff"
                       tick={{ fill: "#fff", fontSize: 12 }}
+                      tickFormatter={(tick) => Math.floor(tick)}
+                      allowDecimals={false}
+                      label={{
+                        value: "Wins",
+                        position: "insideBottom",
+                        offset: -5,
+                        style: { fill: "#fff", fontSize: 13 }
+                      }}
                     />
                     <YAxis
+                      type="category"
+                      dataKey="genre"
                       stroke="#fff"
-                      tick={{ fill: "#fff", fontSize: 12 }}
+                      tick={{ fill: "#fff", fontSize: 13 }}
+                      width={90}
                     />
-                    <Tooltip content={<CustomGenreTooltip />} />
-                    <Legend wrapperStyle={{ color: "#fff" }} />
-                    {topTrendGenres.map((genre, index) => (
-                      <Line
-                        key={genre}
-                        type="monotone"
-                        dataKey={genre}
-                        stroke={lineColors[index % lineColors.length]}
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    ))}
-                  </LineChart>
+                    <Tooltip
+                      content={<CustomTopChartTooltip />} 
+                      cursor={{ fill: "white", fillOpacity: 0.4 }}
+                    />
+                    <Bar
+                      dataKey="wins"
+                      shape={<GenreBarShape />}
+                      isAnimationActive={true}
+                    />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
@@ -231,6 +261,12 @@ export default function Analytics() {
                     <YAxis
                       stroke="#fff"
                       tick={{ fill: "#fff", fontSize: 12 }}
+                      label={{
+                        value: "Wins",
+                        angle: -90,
+                        position: "insideLeft",
+                        style: { fill: "#fff", fontSize: 14 }
+                      }}
                     />
                     <Tooltip
                       contentStyle={tooltipStyle}
@@ -266,6 +302,12 @@ export default function Analytics() {
                     <YAxis
                       stroke="#fff"
                       tick={{ fill: "#fff", fontSize: 12 }}
+                      label={{
+                        value: "Wins",
+                        angle: -90,
+                        position: "insideLeft",
+                        style: { fill: "#fff", fontSize: 14 }
+                      }}
                     />
                     <Tooltip
                       contentStyle={tooltipStyle}
