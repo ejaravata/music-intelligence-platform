@@ -3,100 +3,117 @@ import Header from '../components/Header.jsx';
 import SideMenu from '../components/SideMenu.jsx';
 import config from '../config.json';
 
+const SPOTIFY_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/track/';
+
 export default function Home() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [queryResults, setQueryResults] = useState([]);
   const [songImages, setSongImages] = useState({});
 
-  const search = (query) => {
+  const handleSearch = (query) => {
     fetch(`http://${config.server_host}:${config.server_port}/songs/search?q=${query}`)
-    .then(res => res.json())
-    .then(resJson => setQueryResults(resJson))
-    .catch(err => console.log('Error:', err))
-  }
+      .then(res => res.json())
+      .then(resJson => setQueryResults(resJson))
+      .catch(err => console.error('Search error:', err));
+  };
 
-  // fetch Spotify image for each song
-  useEffect(() => {
+  const fetchSongImages = () => {
     queryResults.forEach((song) => {
-      fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/track/${song.song_id}`)
+      fetch(`${SPOTIFY_OEMBED_URL}${song.song_id}`)
         .then(res => res.json())
         .then(data => {
           setSongImages(prev => ({
             ...prev,
             [song.song_id]: data.thumbnail_url
-          }))
+          }));
         })
-        .catch(err => console.log('Error fetching image:', err))
-    })
+        .catch(err => console.error('Image fetch error:', err));
+    });
+  };
+
+  useEffect(() => {
+    fetchSongImages();
   }, [queryResults])
 
   return (
     <main className="page">
       <Header
-        siteName="CIS 5500"
-        username="user"
+        siteName="Home"
+        username="User"
         isMenuOpen={isSideMenuOpen}
-        onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
-        onSearch={search}
+        onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
+        onSearch={handleSearch}
       />
 
-      <div className={`home-layout${isSideMenuOpen ? "" : " home-layout--collapsed"}`}>
-        <div className={`side-menu-panel${isSideMenuOpen ? "" : " side-menu-panel--collapsed"}`}>
+      <div className={`home-layout${isSideMenuOpen ? '' : ' home-layout--collapsed'}`}>
+        <div className={`side-menu-panel${isSideMenuOpen ? '' : ' side-menu-panel--collapsed'}`}>
           <SideMenu />
         </div>
 
         <section className="page-content">
           <div className="home-grid">
-            <div className="grid-column">
-              <div className="column-header">
-                <h2>Results</h2>
-                <div className="nav-arrows">
-                  <button className="arrow-btn">‹</button>
-                  <button className="arrow-btn">›</button>
-                </div>
-              </div>
-              
-              <div>
-                {queryResults.map((song) => (
-                  <div key={song.song_id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '30px' }}>
-                    {songImages[song.song_id] && (
-                      <img src={songImages[song.song_id]} alt={song.song_name} style={{ width: '100px', flexShrink: 0 }} />
-                    )}
-                    <div>
-                      <p style={{ margin: '0' }}>{song.song_id}</p>
-                      <p style={{ margin: '0' }}>{song.song_name}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid-column">
-              <div className="column-header">
-                <h2>Recommendations</h2>
-                <div className="nav-arrows">
-                  <button className="arrow-btn">‹</button>
-                  <button className="arrow-btn">›</button>
-                </div>
-              </div>
-              {/* <div className="spotify-embeds">
-                {[1, 2, 3].map((i) => (
-                  <iframe
-                    key={i}
-                    src="https://open.spotify.com/embed/track/4PTG3Z6ehGkBFwjybzWkR8?utm_source=generator"
-                    width="100%"
-                    height="80"
-                    frameBorder="0"
-                    allowFullScreen=""
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                  ></iframe>
-                ))}
-              </div> */}
-            </div>
+            <ResultsColumn queryResults={queryResults} songImages={songImages} />
+            <RecommendationsColumn />
           </div>
         </section>
       </div>
     </main>
-  )
+  );
+}
+
+function ResultsColumn({ queryResults, songImages }) {
+  return (
+    <div className="grid-column">
+      <div className="column-header">
+        <h2>Results</h2>
+        <div className="nav-arrows">
+          <button className="arrow-btn">‹</button>
+          <button className="arrow-btn">›</button>
+        </div>
+      </div>
+
+      <div className="songs-list">
+        {queryResults.map((song) => (
+          <SongCard
+            key={song.song_id}
+            song={song}
+            thumbnail={songImages[song.song_id]}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SongCard({ song, thumbnail }) {
+  return (
+    <div className="song-card">
+      {thumbnail && (
+        <img
+          src={thumbnail}
+          alt={song.song_name}
+          className="song-thumbnail"
+        />
+      )}
+      <div className="song-info">
+        <p className="song-id">{song.song_id}</p>
+        <p className="song-name">{song.song_name}</p>
+      </div>
+    </div>
+  );
+}
+
+function RecommendationsColumn() {
+  return (
+    <div className="grid-column">
+      <div className="column-header">
+        <h2>For You</h2>
+        <div className="nav-arrows">
+          <button className="arrow-btn">‹</button>
+          <button className="arrow-btn">›</button>
+        </div>
+      </div>
+      {/* TODO: add recommendations */}
+    </div>
+  );
 }

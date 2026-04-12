@@ -2,9 +2,9 @@ import { NavLink } from "react-router-dom";
 import './SideMenu.css'
 
 const navItems = [
-  { to: "/", label: "Home" },
-  { to: "/analytics", label: "Analytics" },
-  { to: "/favorites", label: "Favorites" },
+  { to: "/", label: "Home", icon: "fa-home" },
+  { to: "/analytics", label: "Analytics", icon: "fa-chart-line" },
+  { to: "/favorites", label: "Favorites", icon: "fa-heart" },
 ];
 
 export default function SideMenu() {
@@ -20,7 +20,8 @@ export default function SideMenu() {
               `side-menu-link${isActive ? " side-menu-link--active" : ""}`
             }
           >
-            {item.label}
+            <i className={`fas ${item.icon}`}></i>
+            <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>

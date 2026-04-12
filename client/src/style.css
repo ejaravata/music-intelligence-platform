@@ -10,7 +10,6 @@ body {
 
 .page-content {
   padding: 20px;
-  transition: padding-left 240ms ease;
 }
 
 .home-layout {
@@ -20,7 +19,6 @@ body {
   transition: grid-template-columns 240ms ease;
 }
 
-/* when side menu is closed, page content takes up the entire width */
 .home-layout--collapsed {
   grid-template-columns: 0 minmax(0, 1fr);
 }
@@ -32,17 +30,20 @@ body {
 }
 
 .grid-column {
-  border: 1px solid white;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   padding: 16px;
+  border: 1px solid white;
   border-radius: 12px;
   overflow-y: auto;
+  word-wrap: break-word;
 }
 
 .column-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* margin-bottom: 16px; */
 }
 
 .column-header h2 {
@@ -57,42 +58,83 @@ body {
 
 .arrow-btn {
   padding: 6px 14px;
-  background: none;
   border: 1px solid #555;
-  color: #aaa;
   border-radius: 8px;
-  cursor: pointer;
+  background: transparent;
+  color: #aaa;
   font-size: 16px;
+  cursor: default;
+  pointer-events: none;
+}
+
+.songs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-height: 0;
+}
+
+.songs-list:empty {
+  display: none;
+}
+
+.song-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
   transition: all 0.2s ease;
 }
 
-.arrow-btn:hover {
+.song-card:hover {
   border-color: white;
-  color: white;
 }
 
-.spotify-embeds {
+.song-thumbnail {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.song-info {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 4px;
+  flex: 1;
 }
 
-.spotify-embed-placeholder {
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 16px;
-  background: #0a0a0a;
-  text-align: center;
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #888;
-  font-size: 14px;
+.song-id {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
 }
 
-/* single column on small screens */
+.song-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .home-layout--collapsed {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+  }
+
+  .side-menu-panel--collapsed {
+    display: none;
+  }
+
   .home-grid {
     grid-template-columns: 1fr;
   }
