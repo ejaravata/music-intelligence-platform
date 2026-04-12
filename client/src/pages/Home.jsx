@@ -4,14 +4,19 @@ import SideMenu from '../components/SideMenu.jsx';
 import config from '../config.json';
 
 const SPOTIFY_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/track/';
+const ARTIST_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/artist/';
 
 export default function Home() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [queryResults, setQueryResults] = useState([]);
   const [songImages, setSongImages] = useState({});
+  const [artistImages, setArtistImages] = useState({});
+  const [searchType, setSearchType] = useState('Song');
 
-  const handleSearch = (query) => {
-    fetch(`http://${config.server_host}:${config.server_port}/songs/search?q=${query}`)
+  const handleSearch = (query, searchType) => {
+    setSearchType(searchType);
+    const endpoint = searchType.toLowerCase() + 's';
+    fetch(`http://${config.server_host}:${config.server_port}/${endpoint}/search?q=${query}`)
       .then(res => res.json())
       .then(resJson => setQueryResults(resJson))
       .catch(err => console.error('Search error:', err));
@@ -31,9 +36,27 @@ export default function Home() {
     });
   };
 
+  const fetchArtistImages = () => {
+    queryResults.forEach((artist) => {
+      fetch(`${ARTIST_OEMBED_URL}${artist.artist_id}`)
+        .then(res => res.json())
+        .then(data => {
+          setArtistImages(prev => ({
+            ...prev,
+            [artist.artist_id]: data.thumbnail_url
+          }));
+        })
+        .catch(err => console.error('Artist image fetch error:', err));
+    });
+  };
+
   useEffect(() => {
-    fetchSongImages();
-  }, [queryResults])
+    if (searchType === 'Artist') {
+      fetchArtistImages();
+    } else {
+      fetchSongImages();
+    }
+  }, [queryResults, searchType])
 
   return (
     <main className="page">
@@ -52,7 +75,7 @@ export default function Home() {
 
         <section className="page-content">
           <div className="home-grid">
-            <ResultsColumn queryResults={queryResults} songImages={songImages} />
+            <ResultsColumn queryResults={queryResults} songImages={songImages} artistImages={artistImages} searchType={searchType} />
             <RecommendationsColumn />
           </div>
         </section>
@@ -61,7 +84,7 @@ export default function Home() {
   );
 }
 
-function ResultsColumn({ queryResults, songImages }) {
+function ResultsColumn({ queryResults, songImages, artistImages, searchType }) {
   return (
     <div className="grid-column">
       <div className="column-header">
@@ -73,13 +96,21 @@ function ResultsColumn({ queryResults, songImages }) {
       </div>
 
       <div className="songs-list">
-        {queryResults.map((song) => (
-          <SongCard
-            key={song.song_id}
-            song={song}
-            thumbnail={songImages[song.song_id]}
-          />
-        ))}
+        {queryResults.map((result) =>
+          searchType === 'Artist' ? (
+            <ArtistCard
+              key={result.artist_id}
+              artist={result}
+              image={artistImages[result.artist_id]}
+            />
+          ) : (
+            <SongCard
+              key={result.song_id}
+              song={result}
+              thumbnail={songImages[result.song_id]}
+            />
+          )
+        )}
       </div>
     </div>
   );
@@ -96,8 +127,26 @@ function SongCard({ song, thumbnail }) {
         />
       )}
       <div className="song-info">
-        <p className="song-id">{song.song_id}</p>
+        {/* <p className="song-id">{song.song_id}</p> */}
         <p className="song-name">{song.song_name}</p>
+        <p className="artists">{song.artists}</p>
+      </div>
+    </div>
+  );
+}
+
+function ArtistCard({ artist, image }) {
+  return (
+    <div className="artist-card">
+      {image && (
+        <img
+          src={image}
+          alt={artist.artist_name}
+          className="artist-thumbnail"
+        />
+      )}
+      <div className="artist-info">
+        <p className="artist-name">{artist.artist_name}</p>
       </div>
     </div>
   );

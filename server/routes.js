@@ -31,11 +31,40 @@ const search_by_song_name = async function(req, res) {
 
   //right now this only brings up song name and id - need to implement other elements later
   connection.query(`SELECT
-                        s.song_id,
-                        s.song_name
+                      s.song_id,
+                      s.song_name,
+                      STRING_AGG(a.artist_name, ', ') AS artists
                     FROM spotify_songs s
+                      JOIN featured_in f ON s.song_id = f.song_id
+                      JOIN spotify_artists a ON f.artist_id = a.artist_id
+                      JOIN audio_attributes au ON s.song_id = au.song_id
                     WHERE s.song_name ILIKE '%' || $1 || '%'
+                    GROUP BY
+                      s.song_id,
+                      s.song_name,
+                      popularity
+                    ORDER BY popularity DESC
                     LIMIT 10;`, [chosen_song],
+                    (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
+const search_by_artist_name = async function(req, res) {
+  const chosen_artist = req.query.q;
+
+  connection.query(`SELECT
+                      artist_id,
+                      artist_name
+                    FROM spotify_artists
+                    WHERE artist_name ILIKE '%' || $1 || '%'
+                    ORDER BY popularity_score DESC
+                    LIMIT 10;`, [chosen_artist],
                     (err, data) => {
     if (err) {
       console.log(err);
@@ -952,6 +981,7 @@ module.exports = {
   grammys_top_artists,
   grammys_top_genres,
   search_by_song_name,
+  search_by_artist_name,
   user_top_genres,
   user_top_albums,
   user_top_artists,

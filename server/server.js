@@ -18,6 +18,7 @@ app.get('/grammys/genres', routes.grammys_genres);
 app.get('/grammys/top_winning_artists', routes.grammys_top_artists);
 app.get('/grammys/top_winning_genres', routes.grammys_top_genres);
 app.get('/songs/search', routes.search_by_song_name);
+app.get('/artists/search', routes.search_by_artist_name);
 app.get('/songs/:song_id/recommendations/genres', routes.recs_from_genres);
 app.get('/songs/:song_id/recommendations/audio_attributes', routes.recs_from_audio_attributes);
 
