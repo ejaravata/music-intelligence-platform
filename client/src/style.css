@@ -111,12 +111,34 @@ body {
   object-fit: cover;
 }
 
+.song-thumbnail.placeholder-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #4a4a4a;
+  font-size: 48px;
+  color: white;
+}
+
 .artist-thumbnail {
   width: 100px;
   height: 100px;
   flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.artist-thumbnail.placeholder-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #4a4a4a;
+  font-size: 48px;
+  color: white;
+}
+
+.fa-user, .fa-music {
+  background: #4a4a4a;
 }
 
 .song-info, .artist-info {

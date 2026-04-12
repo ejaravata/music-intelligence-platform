@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Header from '../components/Header.jsx';
 import SideMenu from '../components/SideMenu.jsx';
 import config from '../config.json';
+import '@fortawesome/fontawesome-free/css/all.css';
 
 const SPOTIFY_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/track/';
 const ARTIST_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/artist/';
@@ -193,6 +194,10 @@ function ResultsColumn({
 }
 
 function SongCard({ song, thumbnail }) {
+  const handleImageError = (e) => {
+    e.target.style.display = 'none';
+  };
+
   return (
     <div className="song-card">
       {thumbnail && (
@@ -200,7 +205,13 @@ function SongCard({ song, thumbnail }) {
           src={thumbnail}
           alt={song.song_name}
           className="song-thumbnail"
+          onError={handleImageError}
         />
+      )}
+      {!thumbnail && (
+        <div className="song-thumbnail placeholder-icon">
+          <i className="fas fa-music"></i>
+        </div>
       )}
       <div className="song-info">
         {/* <p className="song-id">{song.song_id}</p> */}
@@ -212,6 +223,10 @@ function SongCard({ song, thumbnail }) {
 }
 
 function ArtistCard({ artist, image }) {
+  const handleImageError = (e) => {
+    e.target.style.display = 'none';
+  };
+
   return (
     <div className="artist-card">
       {image && (
@@ -219,7 +234,13 @@ function ArtistCard({ artist, image }) {
           src={image}
           alt={artist.artist_name}
           className="artist-thumbnail"
+          onError={handleImageError}
         />
+      )}
+      {!image && (
+        <div className="artist-thumbnail placeholder-icon">
+          <i className="fas fa-user"></i>
+        </div>
       )}
       <div className="artist-info">
         <p className="artist-name">{artist.artist_name}</p>
