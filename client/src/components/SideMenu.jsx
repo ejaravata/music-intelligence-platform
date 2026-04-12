@@ -3,6 +3,7 @@ import './SideMenu.css'
 
 const navItems = [
   { to: "/", label: "Home", icon: "fa-home" },
+  { to: "/overview", label: "Overview", icon: "fa-chart-pie" },
   { to: "/analytics", label: "Analytics", icon: "fa-chart-line" },
   { to: "/favorites", label: "Favorites", icon: "fa-heart" },
 ];
