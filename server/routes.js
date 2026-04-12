@@ -28,6 +28,8 @@ const search_by_song_name = async function(req, res) {
   // TODO (TASK 7): implement a route that given an album_id, returns all songs on that album ordered by track number (ascending)
   //get variable/id chosen
   const chosen_song = req.query.q;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
 
   //right now this only brings up song name and id - need to implement other elements later
   connection.query(`SELECT
@@ -44,7 +46,7 @@ const search_by_song_name = async function(req, res) {
                       s.song_name,
                       popularity
                     ORDER BY popularity DESC
-                    LIMIT 10;`, [chosen_song],
+                    LIMIT $2 OFFSET $3;`, [chosen_song, limit, offset],
                     (err, data) => {
     if (err) {
       console.log(err);
@@ -57,6 +59,8 @@ const search_by_song_name = async function(req, res) {
 
 const search_by_artist_name = async function(req, res) {
   const chosen_artist = req.query.q;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
 
   connection.query(`SELECT
                       artist_id,
@@ -64,7 +68,7 @@ const search_by_artist_name = async function(req, res) {
                     FROM spotify_artists
                     WHERE artist_name ILIKE '%' || $1 || '%'
                     ORDER BY popularity_score DESC
-                    LIMIT 10;`, [chosen_artist],
+                    LIMIT $2 OFFSET $3;`, [chosen_artist, limit, offset],
                     (err, data) => {
     if (err) {
       console.log(err);

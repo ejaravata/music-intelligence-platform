@@ -12,13 +12,24 @@ export default function Home() {
   const [songImages, setSongImages] = useState({});
   const [artistImages, setArtistImages] = useState({});
   const [searchType, setSearchType] = useState('Song');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [currentQuery, setCurrentQuery] = useState('');
+  const [resultCount, setResultCount] = useState(0);
+  const resultsPerPage = 10;
 
   const handleSearch = (query, searchType) => {
+    setCurrentPage(0);
+    setCurrentQuery(query);
     setSearchType(searchType);
     const endpoint = searchType.toLowerCase() + 's';
-    fetch(`http://${config.server_host}:${config.server_port}/${endpoint}/search?q=${query}`)
+    const offset = 0;
+    const encodedQuery = encodeURIComponent(query);
+    fetch(`http://${config.server_host}:${config.server_port}/${endpoint}/search?q=${encodedQuery}&limit=${resultsPerPage}&offset=${offset}`)
       .then(res => res.json())
-      .then(resJson => setQueryResults(resJson))
+      .then(resJson => {
+        setQueryResults(resJson);
+        setResultCount(resJson.length);
+      })
       .catch(err => console.error('Search error:', err));
   };
 
@@ -58,6 +69,41 @@ export default function Home() {
     }
   }, [queryResults, searchType])
 
+  const handlePrevPage = () => {
+    if (currentPage > 0) {
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      const endpoint = searchType.toLowerCase() + 's';
+      const offset = newPage * resultsPerPage;
+      fetch(`http://${config.server_host}:${config.server_port}/${endpoint}/search?q=${encodeURIComponent(currentQuery)}&limit=${resultsPerPage}&offset=${offset}`)
+        .then(res => res.json())
+        .then(resJson => {
+          setQueryResults(resJson);
+          setResultCount(resJson.length);
+        })
+        .catch(err => console.error('Search error:', err));
+    }
+  };
+
+  const handleNextPage = () => {
+    if (resultCount === resultsPerPage) {
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      const endpoint = searchType.toLowerCase() + 's';
+      const offset = newPage * resultsPerPage;
+      fetch(`http://${config.server_host}:${config.server_port}/${endpoint}/search?q=${encodeURIComponent(currentQuery)}&limit=${resultsPerPage}&offset=${offset}`)
+        .then(res => res.json())
+        .then(resJson => {
+          setQueryResults(resJson);
+          setResultCount(resJson.length);
+        })
+        .catch(err => console.error('Search error:', err));
+    }
+  };
+
+  const hasMoreResults = resultCount === resultsPerPage;
+  const totalPages = Math.ceil(resultCount / resultsPerPage) || 1;
+
   return (
     <main className="page">
       <Header
@@ -75,7 +121,16 @@ export default function Home() {
 
         <section className="page-content">
           <div className="home-grid">
-            <ResultsColumn queryResults={queryResults} songImages={songImages} artistImages={artistImages} searchType={searchType} />
+            <ResultsColumn 
+              queryResults={queryResults} 
+              songImages={songImages} 
+              artistImages={artistImages} 
+              searchType={searchType}
+              currentPage={currentPage}
+              hasMoreResults={hasMoreResults}
+              onPrevPage={handlePrevPage}
+              onNextPage={handleNextPage}
+            />
             <RecommendationsColumn />
           </div>
         </section>
@@ -84,14 +139,35 @@ export default function Home() {
   );
 }
 
-function ResultsColumn({ queryResults, songImages, artistImages, searchType }) {
+function ResultsColumn({ 
+  queryResults, 
+  songImages, 
+  artistImages, 
+  searchType, 
+  currentPage, 
+  hasMoreResults, 
+  onPrevPage, 
+  onNextPage 
+}) {
   return (
     <div className="grid-column">
       <div className="column-header">
         <h2>Results</h2>
         <div className="nav-arrows">
-          <button className="arrow-btn">‹</button>
-          <button className="arrow-btn">›</button>
+          <button
+            className="arrow-btn"
+            onClick={onPrevPage}
+            disabled={currentPage === 0}
+          >
+            ‹
+          </button>
+          <button
+            className="arrow-btn"
+            onClick={onNextPage}
+            disabled={!hasMoreResults}
+          >
+            ›
+          </button>
         </div>
       </div>
 

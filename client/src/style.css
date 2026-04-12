@@ -63,8 +63,18 @@ body {
   background: transparent;
   color: #aaa;
   font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.arrow-btn:hover:not(:disabled) {
+  border-color: white;
+  color: white;
+}
+
+.arrow-btn:disabled {
   cursor: default;
-  pointer-events: none;
+  opacity: 0.5;
 }
 
 .songs-list {

@@ -13,6 +13,13 @@ export default function Header({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const options = ['Song', 'Artist', 'Album', 'Genre'];
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery.length < 1) return;
+    onSearch(trimmedQuery, searchType);
+  };
+
   return (
     <header className="header">
       <div className="header-left">
@@ -30,7 +37,7 @@ export default function Header({
         <div className="site-name">{siteName}</div>
       </div>
 
-      <div className="main-search-bar">
+      <form className="main-search-bar" onSubmit={handleSubmit}>
         <div className="search-bar-with-btn">
           <input
             className="main-search-bar-input"
@@ -41,8 +48,7 @@ export default function Header({
           />
           <button
             className="search-btn"
-            onClick={() => onSearch(searchQuery, searchType)}
-            type="button"
+            type="submit"
             title="Search"
           >
             <i className="fas fa-search"></i>
@@ -67,6 +73,10 @@ export default function Header({
                   onClick={() => {
                     setSearchType(option);
                     setIsDropdownOpen(false);
+                    const trimmedQuery = searchQuery.trim();
+                    if (trimmedQuery.length >= 1) {
+                      onSearch(trimmedQuery, option);
+                    }
                   }}
                 >
                   {option}
@@ -75,7 +85,7 @@ export default function Header({
             </div>
           )}
         </div>
-      </div>
+      </form>
       <div className="current-user">{username}</div>
     </header>
   );
