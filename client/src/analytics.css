@@ -1,1 +1,108 @@
+.analytics-page {
+  min-height: 100vh;
+  background: black;
+  color: white;
+  font-family: "Montserrat", sans-serif;
+}
 
+.analytics-layout {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  min-height: calc(100vh - 75px);
+  background: black;
+  transition: grid-template-columns 0.25s ease;
+}
+
+.analytics-layout--collapsed {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+.side-menu-panel {
+  overflow: hidden;
+  border-right: 1px solid white;
+  background: black;
+  transition: border-right 0.25s ease;
+}
+
+.side-menu-panel--collapsed {
+  border-right: none;
+}
+
+.analytics-content {
+  min-width: 0;
+  padding: 36px 40px 28px 36px;
+  background: black;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "top top"
+    "left right";
+  gap: 28px;
+  align-content: start;
+}
+
+/* for container only */
+.analytics-card {
+  border: 1px solid white;
+  border-radius: 14px;
+  padding: 18px;
+  background: black;
+}
+
+/* only h2 inside card */
+.analytics-card h2 {
+  margin: 0 0 18px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+}
+
+.analytics-card--wide {
+  grid-area: top;
+}
+
+.analytics-grid > .analytics-card:nth-child(2) {
+  grid-area: left;
+}
+
+.analytics-grid > .analytics-card:nth-child(3) {
+  grid-area: right;
+}
+
+.chart-wrapper {
+  width: 100%;
+  height: 320px;
+  background: black;
+}
+
+.analytics-card--wide .chart-wrapper {
+  height: 340px;
+  background: black;
+}
+
+@media (max-width: 1000px) {
+  .analytics-layout,
+  .analytics-layout--collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .side-menu-panel,
+  .side-menu-panel--collapsed {
+    border-right: none;
+  }
+
+  .analytics-content {
+    padding: 28px 20px 24px 20px;
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "top"
+      "left"
+      "right";
+  }
+}
