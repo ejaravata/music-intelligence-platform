@@ -397,39 +397,49 @@ const grammys_top_genres = async function(req, res) {
       genre,
       SUM(grammy_wins) AS grammy_wins
     FROM (
+      SELECT
+        genre,
+        year,
+        SUM(grammy_wins) AS grammy_wins
+      FROM (
         SELECT
-          aa.genre,
+          aa.genre AS genre,
+          gs.year AS year,
           COUNT(DISTINCT gs.award) AS grammy_wins
         FROM grammy_songs gs
-            JOIN spotify_songs s ON gs.song_title = s.song_name
-            JOIN audio_attributes aa ON s.song_id = aa.song_id
+        JOIN spotify_songs s ON gs.song_title = s.song_name
+        JOIN audio_attributes aa ON s.song_id = aa.song_id
         WHERE gs.winner = TRUE
           AND aa.genre IS NOT NULL
-        GROUP BY aa.genre
+        GROUP BY aa.genre, gs.year
 
         UNION ALL
-        
+
         SELECT
-          sa.genre,
+          sa.genre AS genre,
+          ga.year AS year,
           COUNT(DISTINCT ga.award) AS grammy_wins
         FROM grammy_albums ga
-            JOIN album a ON ga.album_title = a.album_name
-            JOIN spotify_artists sa ON a.artist_id = sa.artist_id
+        JOIN album a ON ga.album_title = a.album_name
+        JOIN spotify_artists sa ON a.artist_id = sa.artist_id
         WHERE ga.winner = TRUE
           AND sa.genre IS NOT NULL
-        GROUP BY sa.genre
+        GROUP BY sa.genre, ga.year
 
         UNION ALL
-        
+
         SELECT
-          sa.genre,
+          sa.genre AS genre,
+          ga.year AS year,
           COUNT(DISTINCT ga.award) AS grammy_wins
         FROM grammy_artists ga
-            JOIN spotify_artists sa ON ga.artist_name = sa.artist_name
+        JOIN spotify_artists sa ON ga.artist_name = sa.artist_name
         WHERE ga.winner = TRUE
           AND sa.genre IS NOT NULL
-        GROUP BY sa.genre
-    ) h
+        GROUP BY sa.genre, ga.year
+      ) yearly
+      GROUP BY genre, year
+    ) final_yearly
     GROUP BY genre
     ORDER BY grammy_wins DESC;
   `, 
