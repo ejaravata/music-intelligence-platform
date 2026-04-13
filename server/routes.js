@@ -88,12 +88,13 @@ const billboard_top_five = async function(req, res) {
       SELECT
           EXTRACT(YEAR FROM bc.week_ending_date)::INT AS year,
           bc.song_name,
+          STRING_AGG(DISTINCT sa.artist_name, ', ') AS artist_names,
           COUNT(*) AS appearances,
           ROW_NUMBER() OVER (
               PARTITION BY EXTRACT(YEAR FROM bc.week_ending_date)
               ORDER BY COUNT(*) DESC, bc.song_name ASC
               ) AS rn
-      FROM billboard_chart bc
+      FROM billboard_chart bc JOIN spotify_artists sa ON bc.artist_id = sa.artist_id
       GROUP BY
           EXTRACT(YEAR FROM bc.week_ending_date),
           bc.song_name
@@ -101,6 +102,7 @@ const billboard_top_five = async function(req, res) {
     SELECT
         year,
         song_name,
+        artist_names,
         appearances
     FROM yearly_song_appearances
     WHERE rn <= 5
