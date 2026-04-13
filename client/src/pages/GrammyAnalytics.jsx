@@ -13,6 +13,7 @@ import {
   Bar
 } from "recharts";
 
+/* custom tooltip to show genre and wins on hover for top chart */
 function CustomTopChartTooltip({ active, payload, label }) {
   if (!active || !payload || payload.length === 0) {
     return null;
@@ -45,6 +46,7 @@ function CustomTopChartTooltip({ active, payload, label }) {
   );
 }
 
+/* function to create rounded bars for genre popularity chart */
 function GenreBarShape(props) {
   const { x, y, width, height, payload } = props;
 
@@ -61,7 +63,7 @@ function GenreBarShape(props) {
   );
 }
 
-export default function Analytics() {
+export default function GrammyAnalytics() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [genreHistoryRows, setGenreHistoryRows] = useState([]);
   const [topTrendGenres, setTopTrendGenres] = useState([]);
@@ -70,16 +72,16 @@ export default function Analytics() {
   const [topGenreData, setTopGenreData] = useState([]);
 
   const genreColors = [
-    "#0058d4",
-    "#ee841b",
-    "#2b712d",
-    "#e91e63",
-    "#9c27b0",
-    "#fbec64",
-    "#03a9f4",
-    "#f44336",
-    "#94db43",
-    "#dfb022"
+    "#e6194B",
+    "#f58231",
+    "#ffe119",
+    "#9A6324",
+    "#aaffc3",
+    "#3cb44b",
+    "#42d4f4",
+    "#4363d8",
+    "#911eb4",
+    "#f032e6"
   ];
 
   useEffect(() => {
@@ -88,6 +90,8 @@ export default function Analytics() {
       .then((data) => {
         const genreTotals = {};
 
+        /* rewrite data into more usable format and calculate total wins per genre
+        for top trend calculation */
         data.forEach((row) => {
           const genre = row.genre;
           const wins = Number(row.grammy_wins);
@@ -143,6 +147,8 @@ export default function Analytics() {
     fontSize: "12px"
   };
 
+  /* color map to assign consistent colors to genres in top trend chart, 
+  even if they move */
   const genreColorMap = Object.fromEntries(
     topTrendGenres.map((genre, index) => [
       genre,
@@ -191,6 +197,10 @@ export default function Analytics() {
               <h2>
                 Genre Popularity Over Time (Total Wins From 1959 - {selectedYear})
               </h2>
+              <p className="analytics-card-note">
+                Note: wins only accounts for artist, song, and album awards. 
+                No miscellaneous awards are included, such as "Best Performance" or "Best Music Video".
+              </p>
 
               <div className="year-slider-wrapper">
                 <input
@@ -234,7 +244,7 @@ export default function Analytics() {
                     />
                     <Tooltip
                       content={<CustomTopChartTooltip />} 
-                      cursor={{ fill: "white", fillOpacity: 0.4 }}
+                      cursor={{ fill: "#fff", fillOpacity: 0.4 }}
                     />
                     <Bar
                       dataKey="wins"
@@ -248,6 +258,10 @@ export default function Analytics() {
 
             <div className="analytics-card">
               <h2>Top 10 Artists by Grammy Wins</h2>
+              <p className="analytics-card-note">
+                Note: wins only accounts for artist, song, and album awards. 
+                No miscellaneous awards are included, such as "Best Performance" or "Best Music Video".
+              </p>
               <div className="chart-wrapper">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topArtistData}>
@@ -268,14 +282,14 @@ export default function Analytics() {
                         value: "Wins",
                         angle: -90,
                         position: "insideLeft",
-                        style: { fill: "#fff", fontSize: 14 }
+                        style: { textAnchor: 'middle',fill: "#fff", fontSize: 14 }
                       }}
                     />
                     <Tooltip
                       contentStyle={tooltipStyle}
                       labelStyle={{ color: "#fff", marginBottom: "4px" }}
                       itemStyle={{ color: "#fff", padding: 0 }}
-                      cursor={{ fill: "white", fillOpacity: 0.4 }}
+                      cursor={{ fill: "#fff", fillOpacity: 0.4 }}
                     />
                     <Bar
                       dataKey="grammy_wins"
@@ -288,7 +302,11 @@ export default function Analytics() {
             </div>
 
             <div className="analytics-card">
-              <h2>Top 10 Genres by Grammy Wins</h2>
+              <h2>Top 10 Genres by Average Grammy Wins</h2>
+              <p className="analytics-card-note">
+                Note: wins only accounts for artist, song, and album awards. 
+                No miscellaneous awards are included, such as "Best Performance" or "Best Music Video".
+              </p>
               <div className="chart-wrapper">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topGenreData}>
@@ -304,19 +322,20 @@ export default function Analytics() {
                     />
                     <YAxis
                       stroke="#fff"
+                      domain={[0, 6]}
                       tick={{ fill: "#fff", fontSize: 12 }}
                       label={{
-                        value: "Wins",
+                        value: "Average Wins",
                         angle: -90,
                         position: "insideLeft",
-                        style: { fill: "#fff", fontSize: 14 }
+                        style: { textAnchor: 'middle',fill: "#fff", fontSize: 14 }
                       }}
                     />
                     <Tooltip
                       contentStyle={tooltipStyle}
                       labelStyle={{ color: "#fff", marginBottom: "4px" }}
                       itemStyle={{ color: "#fff", padding: 0 }}
-                      cursor={{ fill: "white", fillOpacity: 0.4 }}
+                      cursor={{ fill: "#fff", fillOpacity: 0.4 }}
                     />
                     <Bar
                       dataKey="grammy_wins"
