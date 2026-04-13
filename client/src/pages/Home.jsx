@@ -23,10 +23,10 @@ export default function Home() {
     setCurrentPage(0);
     setCurrentQuery(query);
     setSearchType(searchType);
-    const endpoint = searchType.toLowerCase() + 's';
+    const type = searchType.toLowerCase() + 's';
     const offset = 0;
     const encodedQuery = encodeURIComponent(query);
-    fetch(`http://${config.server_host}:${config.server_port}/${endpoint}/search?q=${encodedQuery}&limit=${resultsPerPage}&offset=${offset}`)
+    fetch(`http://${config.server_host}:${config.server_port}/search?q=${encodedQuery}&type=${type}&limit=${resultsPerPage}&offset=${offset}`)
       .then(res => res.json())
       .then(resJson => {
         setQueryResults(resJson);
@@ -75,9 +75,9 @@ export default function Home() {
     if (currentPage > 0) {
       const newPage = currentPage - 1;
       setCurrentPage(newPage);
-      const endpoint = searchType.toLowerCase() + 's';
+      const type = searchType.toLowerCase() + 's';
       const offset = newPage * resultsPerPage;
-      fetch(`http://${config.server_host}:${config.server_port}/${endpoint}/search?q=${encodeURIComponent(currentQuery)}&limit=${resultsPerPage}&offset=${offset}`)
+      fetch(`http://${config.server_host}:${config.server_port}/search?q=${encodeURIComponent(currentQuery)}&type=${type}&limit=${resultsPerPage}&offset=${offset}`)
         .then(res => res.json())
         .then(resJson => {
           setQueryResults(resJson);
@@ -91,9 +91,9 @@ export default function Home() {
     if (resultCount === resultsPerPage) {
       const newPage = currentPage + 1;
       setCurrentPage(newPage);
-      const endpoint = searchType.toLowerCase() + 's';
+      const type = searchType.toLowerCase() + 's';
       const offset = newPage * resultsPerPage;
-      fetch(`http://${config.server_host}:${config.server_port}/${endpoint}/search?q=${encodeURIComponent(currentQuery)}&limit=${resultsPerPage}&offset=${offset}`)
+      fetch(`http://${config.server_host}:${config.server_port}/search?q=${encodeURIComponent(currentQuery)}&type=${type}&limit=${resultsPerPage}&offset=${offset}`)
         .then(res => res.json())
         .then(resJson => {
           setQueryResults(resJson);

@@ -22,60 +22,59 @@ connection.connect((err) => err && console.log(err));
  * GROUP 4 PROJECT ROUTES *
  ******************/
 
-//Route 1: GET /songs/search?q={song_name}
-//Used in search and recommendation page
-const search_by_song_name = async function(req, res) {
-  // TODO (TASK 7): implement a route that given an album_id, returns all songs on that album ordered by track number (ascending)
-  //get variable/id chosen
-  const chosen_song = req.query.q;
+//Route 1: GET /search?q={query}&type={song|artist}&limit={limit}&offset={offset}
+const search = async function(req, res) {
+  const query = req.query.q;
+  const type = req.query.type?.toLowerCase();
   const limit = parseInt(req.query.limit) || 10;
   const offset = parseInt(req.query.offset) || 0;
 
-  //right now this only brings up song name and id - need to implement other elements later
-  connection.query(`SELECT
-                      s.song_id,
-                      s.song_name,
-                      JSON_AGG(JSON_BUILD_OBJECT('artist_id', f.artist_id, 'artist_name', a.artist_name)) AS artists
-                    FROM spotify_songs s
-                      JOIN featured_in f ON s.song_id = f.song_id
-                      JOIN spotify_artists a ON f.artist_id = a.artist_id
-                      JOIN audio_attributes au ON s.song_id = au.song_id
-                    WHERE s.song_name ILIKE '%' || $1 || '%'
-                    GROUP BY
-                      s.song_id,
-                      s.song_name
-                    ORDER BY MAX(au.popularity) DESC
-                    LIMIT $2 OFFSET $3;`, [chosen_song, limit, offset],
-                    (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data.rows);
-    }
-  });
-}
+  if (!query) {
+    return res.json([]);
+  }
 
-const search_by_artist_name = async function(req, res) {
-  const chosen_artist = req.query.q;
-  const limit = parseInt(req.query.limit) || 10;
-  const offset = parseInt(req.query.offset) || 0;
-
-  connection.query(`SELECT
-                      artist_id,
-                      artist_name
-                    FROM spotify_artists
-                    WHERE artist_name ILIKE '%' || $1 || '%'
-                    ORDER BY popularity_score DESC
-                    LIMIT $2 OFFSET $3;`, [chosen_artist, limit, offset],
-                    (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data.rows);
-    }
-  });
+  if (type === 'songs') {
+    connection.query(`SELECT
+                        s.song_id,
+                        s.song_name,
+                        JSON_AGG(JSON_BUILD_OBJECT('artist_id', f.artist_id, 'artist_name', a.artist_name)) AS artists
+                      FROM spotify_songs s
+                        JOIN featured_in f ON s.song_id = f.song_id
+                        JOIN spotify_artists a ON f.artist_id = a.artist_id
+                        JOIN audio_attributes au ON s.song_id = au.song_id
+                      WHERE s.song_name ILIKE '%' || $1 || '%'
+                      GROUP BY
+                        s.song_id,
+                        s.song_name
+                      ORDER BY MAX(au.popularity) DESC
+                      LIMIT $2 OFFSET $3;`, [query, limit, offset],
+                      (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data.rows);
+      }
+    });
+  } else if (type === 'artists') {
+    connection.query(`SELECT
+                        artist_id,
+                        artist_name
+                      FROM spotify_artists
+                      WHERE artist_name ILIKE '%' || $1 || '%'
+                      ORDER BY popularity_score DESC
+                      LIMIT $2 OFFSET $3;`, [query, limit, offset],
+                      (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data.rows);
+      }
+    });
+  } else {
+    res.status(400).json({ error: 'Invalid type parameter' });
+  }
 }
 
 //Route 2: GET /billboard/annual_top_songs
@@ -983,8 +982,7 @@ module.exports = {
   grammys_genres,
   grammys_top_artists,
   grammys_top_genres,
-  search_by_song_name,
-  search_by_artist_name,
+  search,
   user_top_genres,
   user_top_albums,
   user_top_artists,
