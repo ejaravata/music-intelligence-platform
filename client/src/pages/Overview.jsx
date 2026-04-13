@@ -32,7 +32,7 @@ export default function Overview() {
   return (
     <main className="page">
       <Header
-        siteName="Home"
+        siteName="Overview"
         username="User"
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
