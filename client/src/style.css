@@ -101,6 +101,7 @@ body {
 
 .song-card:hover, .artist-card:hover {
   border-color: white;
+  cursor: pointer;
 }
 
 .song-thumbnail {
@@ -158,6 +159,78 @@ body {
   margin: 0;
   font-size: 12px;
   color: #999;
+}
+
+.artist-link {
+  color: #999;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.artist-link:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+.info-container {
+  padding: 24px;
+  max-width: 1200px;
+}
+
+.info-header {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 40px;
+  align-items: center;
+}
+
+.info-thumbnail {
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #4a4a4a;
+  font-size: 80px;
+  color: white;
+}
+
+.info-thumbnail.artist-thumbnail {
+  border-radius: 50%;
+}
+
+.info-thumbnail.song-thumbnail {
+  border-radius: 6px;
+}
+
+.info-details-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-title {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 700;
+}
+
+.info-subtitle {
+  margin: 0;
+  font-size: 16px;
+  color: #999;
+}
+
+.info-section {
+  margin-top: 40px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
 }
 
 @media (max-width: 768px) {

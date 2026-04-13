@@ -3,6 +3,8 @@ import Home from "./pages/Home.jsx";
 import Overview from "./pages/Overview.jsx";
 import Analytics from "./pages/Analytics.jsx";
 import Favorites from "./pages/Favorites.jsx";
+import SongInfo from "./pages/SongInfo.jsx";
+import ArtistInfo from "./pages/ArtistInfo.jsx";
 
 export default function App() {
   return (
@@ -12,6 +14,8 @@ export default function App() {
         <Route path="/overview" element={<Overview />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/favorites" element={<Favorites />} />
+        <Route path="/song/:songId" element={<SongInfo />} />
+        <Route path="/artist/:artistId" element={<ArtistInfo />} />
       </Routes>
     </BrowserRouter>
   );

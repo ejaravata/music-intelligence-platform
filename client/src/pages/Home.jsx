@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header.jsx';
 import SideMenu from '../components/SideMenu.jsx';
 import config from '../config.json';
@@ -150,6 +151,8 @@ function ResultsColumn({
   onPrevPage, 
   onNextPage 
 }) {
+  const navigate = useNavigate();
+
   return (
     <div className="grid-column">
       <div className="column-header">
@@ -185,6 +188,7 @@ function ResultsColumn({
               key={result.song_id}
               song={result}
               thumbnail={songImages[result.song_id]}
+              onClick={() => navigate(`/song/${result.song_id}`)}
             />
           )
         )}
@@ -193,13 +197,19 @@ function ResultsColumn({
   );
 }
 
-function SongCard({ song, thumbnail }) {
+function SongCard({ song, thumbnail, onClick }) {
+  const navigate = useNavigate();
   const handleImageError = (e) => {
     e.target.style.display = 'none';
   };
 
+  const handleArtistClick = (e, artistId) => {
+    e.stopPropagation();
+    navigate(`/artist/${artistId}`);
+  };
+
   return (
-    <div className="song-card">
+    <div className="song-card" onClick={onClick}>
       {thumbnail && (
         <img
           src={thumbnail}
@@ -214,9 +224,23 @@ function SongCard({ song, thumbnail }) {
         </div>
       )}
       <div className="song-info">
-        {/* <p className="song-id">{song.song_id}</p> */}
         <p className="song-name">{song.song_name}</p>
-        <p className="artists">{song.artists}</p>
+        <p className="artists">
+          {Array.isArray(song.artists) ?
+            song.artists.map((artist, index) => (
+              <span key={artist.artist_id}>
+                <span
+                  className="artist-link"
+                  onClick={(e) => handleArtistClick(e, artist.artist_id)}
+                >
+                  {artist.artist_name}
+                </span>
+                {index < song.artists.length - 1 && <span>, </span>}
+              </span>
+            )) :
+            song.artists
+          }
+        </p>
       </div>
     </div>
   );
