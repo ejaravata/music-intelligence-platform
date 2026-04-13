@@ -36,6 +36,7 @@ export default function Details() {
         username="User"
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
+        showSearch={false}
         onSearch={handleSearch}
       />
 
