@@ -35,7 +35,7 @@ const search_by_song_name = async function(req, res) {
   connection.query(`SELECT
                       s.song_id,
                       s.song_name,
-                      STRING_AGG(a.artist_name, ', ') AS artists
+                      JSON_AGG(JSON_BUILD_OBJECT('artist_id', f.artist_id, 'artist_name', a.artist_name)) AS artists
                     FROM spotify_songs s
                       JOIN featured_in f ON s.song_id = f.song_id
                       JOIN spotify_artists a ON f.artist_id = a.artist_id
@@ -43,9 +43,8 @@ const search_by_song_name = async function(req, res) {
                     WHERE s.song_name ILIKE '%' || $1 || '%'
                     GROUP BY
                       s.song_id,
-                      s.song_name,
-                      popularity
-                    ORDER BY popularity DESC
+                      s.song_name
+                    ORDER BY MAX(au.popularity) DESC
                     LIMIT $2 OFFSET $3;`, [chosen_song, limit, offset],
                     (err, data) => {
     if (err) {
