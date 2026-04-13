@@ -428,7 +428,7 @@ const grammys_top_genres = async function(req, res) {
   connection.query(`
     SELECT
       genre,
-      SUM(grammy_wins) AS grammy_wins
+      ROUND(SUM(grammy_wins) / 66, 1) AS grammy_wins
     FROM (
       SELECT
         genre,
