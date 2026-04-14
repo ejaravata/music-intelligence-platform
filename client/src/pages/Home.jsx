@@ -17,8 +17,46 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(0);
   const [currentQuery, setCurrentQuery] = useState('');
   const [resultCount, setResultCount] = useState(0);
+  const [userName, setUserName] = useState("User");
+  const navigate = useNavigate();
   const resultsPerPage = 10;
   const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch(`http://${config.server_host}:${config.server_port}/me`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        const user = await res.json();
+        const fullName =
+          user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : user.name || user.email || "User";
+
+        setUserName(fullName);
+      } catch (err) {
+        console.error("Failed to load user:", err);
+      }
+    }
+
+    loadUser();
+  }, []);
+
+  async function logout() {
+    try {
+      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+
+    navigate("/", { replace: true });
+  }
 
   const handleSearch = (query, searchType) => {
     setCurrentPage(0);
@@ -118,8 +156,8 @@ export default function Home() {
   return (
     <main className="page">
       <Header
-        siteName="Home"
-        username="User"
+        username={userName}
+        onLogout={logout}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
         onSearch={handleSearch}
