@@ -1100,6 +1100,52 @@ const user_music_profile = async function(req, res) {
   }
 };
 
+//Route 19: GET /stats/song_count
+//grabs unique count of songs in dataset
+const unique_song_count = async function(req, res) {
+  connection.query(`
+    SELECT COUNT(DISTINCT song_name) AS song_count
+    FROM spotify_songs;
+  `, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows[0]);
+    }
+  });
+};
+
+//Route 20: GET /stats/artist_count
+//grabs unique count of artists in dataset
+const unique_artist_count = async function(req, res) {
+  connection.query(`
+    SELECT COUNT(DISTINCT artist_name) AS artist_count
+    FROM spotify_artists;
+  `, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows[0]);
+    }
+  });
+};
+
+// Route 21: GET /stats/album_count
+const unique_album_count = async function(req, res) {
+  connection.query(`
+    SELECT COUNT(DISTINCT album_id) AS album_count FROM spotify_albums;
+  `, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows[0]); // { album_count: X }
+    }
+  });
+};
+
 //make sure to add functions to module exports here
 module.exports = {
   billboard_trending_songs,
@@ -1121,5 +1167,8 @@ module.exports = {
   user_most_sad_songs,
   user_music_profile,
   recs_from_audio_attributes,
-  recs_from_genres
+  recs_from_genres,
+  unique_song_count,
+  unique_artist_count,
+  unique_album_count
 }

@@ -9,25 +9,23 @@ export default function Overview() {
   const [queryResults, setQueryResults] = useState([]);
   const [searchType, setSearchType] = useState('Song');
 
-  // OPTIONAL state to track loading
+  //stats state
+  const [songCount, setSongCount] = useState(0);
+  const [artistCount, setArtistCount] = useState(0);
+  const [albumCount, setAlbumCount] = useState(0);
+
   const [loading, setLoading] = useState(false);
 
   // ================================
-  // EXISTING SEARCH FUNCTION (UNCHANGED)
+  // SEARCH FUNCTION (cleaned)
   // ================================
   const handleSearch = (query, searchType) => {
-    setCurrentPage(0);
-    setCurrentQuery(query);
     setSearchType(searchType);
-    const endpoint = searchType.toLowerCase() + 's';
-    const offset = 0;
-    const encodedQuery = encodeURIComponent(query);
 
     fetch(`http://${config.server_host}:${config.server_port}/overview`)
       .then(res => res.json())
       .then(resJson => {
         setQueryResults(resJson);
-        setResultCount(resJson.length);
       })
       .catch(err => console.error('Search error:', err));
   };
@@ -41,7 +39,6 @@ export default function Overview() {
     fetch(`http://${config.server_host}:${config.server_port}/billboard/trending_songs`)
       .then(res => res.json())
       .then(data => {
-        // Store results in existing state
         setQueryResults(data);
         setLoading(false);
       })
@@ -52,16 +49,29 @@ export default function Overview() {
   };
 
   // ================================
+  // FETCH STATS
+  // ================================
+  const fetchStats = () => {
+    fetch(`http://${config.server_host}:${config.server_port}/stats/song_count`)
+      .then(res => res.json())
+      .then(data => setSongCount(data.song_count));
+
+    fetch(`http://${config.server_host}:${config.server_port}/stats/artist_count`)
+      .then(res => res.json())
+      .then(data => setArtistCount(data.artist_count));
+
+    fetch(`http://${config.server_host}:${config.server_port}/stats/album_count`)
+      .then(res => res.json())
+      .then(data => setAlbumCount(data.album_count));
+  };
+
+  // ================================
   // RUN ON PAGE LOAD
   // ================================
   useEffect(() => {
-  let hasFetched = false;
-
-  if (!hasFetched) {
     fetchTrendingSongs();
-    hasFetched = true;
-  }
-}, []);
+    fetchStats();
+  }, []);
 
   return (
     <main className="page">
@@ -79,42 +89,58 @@ export default function Overview() {
           <SideMenu />
         </div>
 
-        {/* ================================
-            NEW: MAIN CONTENT AREA
-        ================================= */}
+        {/* MAIN CONTENT */}
         <div className="overview-content">
+          <h2>Billboard Trending Songs</h2>
 
-          <h2>Trending Songs</h2>
-
-          {/* Loading indicator */}
           {loading && <p>Loading trending songs...</p>}
 
-          {/* Scrollable table container */}
-          <div className="table-container">
-            <table className="results-table">
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>Song</th>
-                  <th>Artist(s)</th>
-                  <th>Week</th>
-                </tr>
-              </thead>
+          <div className="overview-main">
 
-              <tbody>
-                {queryResults.map((row, index) => (
-                  <tr key={index}>
-                    {/* Match your SQL output structure */}
-                    <td>{row.current_rank}</td>
-                    <td>{row.song_name}</td>
-                    <td>{row.string_agg}</td>
-                    <td>{row.week_ending_date}</td>
+            {/* TABLE */}
+            <div className="table-container">
+              <table className="results-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Song</th>
+                    <th>Artist(s)</th>
+                    <th>Week</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
 
+                <tbody>
+                  {queryResults.map((row, index) => (
+                    <tr key={index}>
+                      <td>{row.current_rank}</td>
+                      <td>{row.song_name}</td>
+                      <td>{row.string_agg}</td>
+                      <td>{row.week_ending_date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* STATS PANEL */}
+            <div className="stats-panel">
+              <div className="stat-card">
+                <h3>Number of Songs in Data</h3>
+                <p>{songCount}</p>
+              </div>
+
+              <div className="stat-card">
+                <h3>Number of Artists in Data</h3>
+                <p>{artistCount}</p>
+              </div>
+
+              {/* <div className="stat-card">
+                <h3>Unique Album Count</h3>
+                <p>{albumCount}</p>
+              </div> */}
+            </div>
+
+          </div>
         </div>
       </div>
     </main>
