@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header.jsx';
 import SideMenu from '../components/SideMenu.jsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -67,6 +67,44 @@ export default function SongInfo() {
   const [subgenres, setSubgenres] = useState([]);
   const [tempo, setTempo] = useState('');
   const [loudness, setLoudness] = useState('');
+  const [userName, setUserName] = useState("User");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch(`http://${config.server_host}:${config.server_port}/me`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        const user = await res.json();
+        const fullName =
+          user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : user.name || user.email || "User";
+
+        setUserName(fullName);
+      } catch (err) {
+        console.error("Failed to load user:", err);
+      }
+    }
+
+    loadUser();
+  }, []);
+
+  async function logout() {
+    try {
+      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+
+    navigate("/", { replace: true });
+  }
 
   useEffect(() => {
     if (songId) {
@@ -136,7 +174,8 @@ export default function SongInfo() {
     <main className="page">
       <Header
         siteName="Song Info"
-        username="User"
+        username={userName}
+        onLogout={logout}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
       />
