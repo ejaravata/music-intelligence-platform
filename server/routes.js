@@ -97,6 +97,38 @@ const artist_info = async function(req, res) {
     });
 }
 
+const song_info = async function(req, res) {
+  const id = req.params.id;
+  
+  connection.query(`
+    WITH subgenres AS (
+      SELECT
+        song_id,
+        STRING_AGG(subgenre, ', ' ORDER BY subgenre) AS subgenres
+      FROM songs_subgenres
+      WHERE song_id = $1
+      GROUP BY song_id
+    )
+
+    SELECT
+      au.*,
+      s.song_name,
+      au.genre AS main_genre,
+      sg.subgenres
+    FROM audio_attributes au
+      JOIN spotify_songs s ON au.song_id = s.song_id
+      LEFT JOIN subgenres sg ON au.song_id = sg.song_id
+    WHERE s.song_id = $1;`, [id],
+    (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data.rows[0]);
+      }
+    });
+}
+
 //Route 4: GET /artist_songs?id={id}&limit={limit}&offset={offset}
 const artist_songs = async function(req, res) {
   const id = req.query.id;
@@ -1156,6 +1188,7 @@ module.exports = {
   grammys_top_artists,
   grammys_top_genres,
   search,
+  song_info,
   artist_info,
   artist_songs,
   related,
