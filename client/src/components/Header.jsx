@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import './Header.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
@@ -17,7 +16,8 @@ Analytics,jsx, I have:
 
 export default function Header({
   siteName = "CIS 5500",
-  username = "Username",
+  username = "",
+  onLogout,
   onMenuToggle,
   onSearch = () => {},
   showSearch = true
@@ -26,22 +26,16 @@ export default function Header({
   const [searchType, setSearchType] = useState('Song');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const options = ['Song', 'Artist', 'Album', 'Genre'];
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmedQuery = searchQuery.trim();
     if (trimmedQuery.length < 1) return;
-    
-    // If not on home page, navigate to home with search params
-    if (location.pathname !== '/') {
-      navigate(`/?q=${encodeURIComponent(trimmedQuery)}&type=${searchType}`);
-    } else {
-      // On home page, execute search normally
-      onSearch(trimmedQuery, searchType);
-    }
+    onSearch?.(trimmedQuery, searchType);
   };
+
+  const userInitial = username ? username.charAt(0).toUpperCase() : 'U';
+  const showUserSection = Boolean(username || onLogout);
 
   return (
     // also splitting header into 3 sections (left, center, right) to make styling easier.
@@ -53,12 +47,14 @@ export default function Header({
             type="button"
             className="menu-toggle"
             onClick={onMenuToggle}
+            aria-label="Toggle menu"
           >
             <span className="menu-toggle-line" />
             <span className="menu-toggle-line" />
             <span className="menu-toggle-line" />
           </button>
         ) : null}
+
         <div className="site-name">{siteName}</div>
       </div>
 
@@ -73,6 +69,7 @@ export default function Header({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+
               <button
                 className="search-btn"
                 type="submit"
@@ -86,7 +83,7 @@ export default function Header({
               <button
                 type="button"
                 className="dropdown-trigger"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onClick={() => setIsDropdownOpen((open) => !open)}
               >
                 {searchType}
                 <span className="dropdown-arrow">▼</span>
@@ -101,9 +98,10 @@ export default function Header({
                       onClick={() => {
                         setSearchType(option);
                         setIsDropdownOpen(false);
+
                         const trimmedQuery = searchQuery.trim();
                         if (trimmedQuery.length >= 1) {
-                          onSearch(trimmedQuery, option);
+                          onSearch?.(trimmedQuery, option);
                         }
                       }}
                     >
@@ -118,7 +116,24 @@ export default function Header({
       </div>
 
       <div className="header-right">
-        <div className="current-user">{username}</div>
+        {showUserSection ? (
+          <>
+            <div id="user-pill">
+              <div id="user-avatar">{userInitial}</div>
+              <div id="user-display">{username || 'User'}</div>
+            </div>
+
+            {onLogout ? (
+              <button
+                type="button"
+                className="logout-btn"
+                onClick={onLogout}
+              >
+                Sign Out
+              </button>
+            ) : null}
+          </>
+        ) : null}
       </div>
     </header>
   );
