@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import Overview from "./pages/Overview.jsx";
 import GrammyAnalytics from "./pages/GrammyAnalytics.jsx";
@@ -7,22 +9,56 @@ import Favorites from "./pages/Favorites.jsx";
 import SongInfo from "./pages/SongInfo.jsx";
 import ArtistInfo from "./pages/ArtistInfo.jsx";
 import Details from "./pages/Details.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 // added path for both analytics and grammy-analytics since had some issues with 
 // the path, bc it didn't connect properly. 
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [checkedAuth, setCheckedAuth] = useState(false);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch(`${BASE_URL}/me`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          setUser(false);
+          return;
+        }
+
+        const data = await res.json();
+        setUser(data || false);
+      } catch (err) {
+        console.error("Failed to check auth:", err);
+        setUser(false);
+      } finally {
+        setCheckedAuth(true);
+      }
+    }
+
+    loadUser();
+  }, []);
+
+  if (!checkedAuth) {
+    return <div>Loading...</div>;
+  }
+  
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/overview" element={<Overview />} />
-        <Route path="/details" element={<Details />} />
-        <Route path="/analytics" element={<GrammyAnalytics />} />
-        <Route path="/grammy-analytics" element={<GrammyAnalytics />} />
-        <Route path="/billboard-analytics" element={<BillboardAnalytics />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/song/:songId" element={<SongInfo />} />
-        <Route path="/artist/:artistId" element={<ArtistInfo />} />
+        <Route path="/" element={<Login setUser={setUser} />} />        
+        <Route path="/home" element={<ProtectedRoute user={user}><Home /></ProtectedRoute>}/>
+        <Route path="/overview" element={<ProtectedRoute user={user}><Overview /></ProtectedRoute>} />
+        <Route path="/details" element={<ProtectedRoute user={user}><Details /></ProtectedRoute>} />
+        <Route path="/analytics" element={<ProtectedRoute user={user}><GrammyAnalytics /></ProtectedRoute>} />
+        <Route path="/grammy-analytics" element={<ProtectedRoute user={user}><GrammyAnalytics /></ProtectedRoute>} />
+        <Route path="/billboard-analytics" element={<ProtectedRoute user={user}><BillboardAnalytics /></ProtectedRoute>} />
+        <Route path="/favorites" element={<ProtectedRoute user={user}><Favorites /></ProtectedRoute>} />
+        <Route path="/song/:songId" element={<ProtectedRoute user={user}><SongInfo /></ProtectedRoute>} />
+        <Route path="/artist/:artistId" element={<ProtectedRoute user={user}><ArtistInfo /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
