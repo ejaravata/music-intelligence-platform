@@ -116,6 +116,8 @@ export default function BillboardAnalytics() {
   const [selectedYear, setSelectedYear] = useState(1959);
   const [topArtistData, setTopArtistData] = useState([]);
   const [annualTopSongs, setAnnualTopSongs] = useState([]);
+  const [userName, setUserName] = useState("User");
+  const navigate = useNavigate();
 
   const genreColors = [
     "#e6194B",
