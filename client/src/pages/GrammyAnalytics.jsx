@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import "../analytics.css";
 import config from "../config.json";
 import SideMenu from "../components/SideMenu.jsx";
@@ -70,6 +71,8 @@ export default function GrammyAnalytics() {
   const [selectedYear, setSelectedYear] = useState(1959);
   const [topArtistData, setTopArtistData] = useState([]);
   const [topGenreData, setTopGenreData] = useState([]);
+  const [userName, setUserName] = useState("User");
+  const navigate = useNavigate();
 
   const genreColors = [
     "#e6194B",
@@ -83,6 +86,42 @@ export default function GrammyAnalytics() {
     "#911eb4",
     "#f032e6"
   ];
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch(`http://${config.server_host}:${config.server_port}/me`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        const user = await res.json();
+        const fullName =
+          user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : user.name || user.email || "User";
+
+        setUserName(fullName);
+      } catch (err) {
+        console.error("Failed to load user:", err);
+      }
+    }
+
+    loadUser();
+  }, []);
+
+  async function logout() {
+    try {
+      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+
+    navigate("/", { replace: true });
+  }
 
   useEffect(() => {
     fetch(`http://${config.server_host}:${config.server_port}/grammys/genres`)
@@ -173,7 +212,8 @@ export default function GrammyAnalytics() {
     <div className="analytics-page">
       <Header
         siteName="Grammy Analytics"
-        username="User"
+        username={userName}
+        onLogout={logout}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
       />
 
