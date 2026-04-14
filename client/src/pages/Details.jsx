@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header.jsx';
 import SideMenu from '../components/SideMenu.jsx';
 import config from '../config.json';
@@ -8,6 +9,32 @@ export default function Details() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [queryResults, setQueryResults] = useState([]);
   const [searchType, setSearchType] = useState('Song');
+  const [userName, setUserName] = useState("User");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch(`http://${config.server_host}:${config.server_port}/me`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        const user = await res.json();
+        const fullName =
+          user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : user.name || user.email || "User";
+
+        setUserName(fullName);
+      } catch (err) {
+        console.error("Failed to load user:", err);
+      }
+    }
+
+    loadUser();
+  }, []);
   
   const handleSearch = (query, searchType) => {
     setCurrentPage(0);
@@ -33,7 +60,8 @@ export default function Details() {
     <main className="page">
       <Header
         siteName="Selected Details"
-        username="User"
+        username={userName}
+        onLogout={logout}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
         showSearch={false}
