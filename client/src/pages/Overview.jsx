@@ -15,6 +15,12 @@ export default function Overview() {
   const [artistCount, setArtistCount] = useState(0);
   const [albumCount, setAlbumCount] = useState(0);
 
+  //years and awards
+  const [years, setYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState('');
+  const [awardResults, setAwardResults] = useState([]);
+  const [awardPage, setAwardPage] = useState(0);
+
   const [loading, setLoading] = useState(false);
   
   const [userName, setUserName] = useState("User");
@@ -70,12 +76,40 @@ export default function Overview() {
   };
 
   // ================================
+  // FETCH YEARS AND AWARDS
+  // ================================
+
+  const fetchYears = () => {
+  fetch(`http://${config.server_host}:${config.server_port}/awards/years`)
+    .then(res => res.json())
+    .then(data => {
+      setYears(data);
+      if (data.length > 0) {
+        setSelectedYear(data[0].year); // default to latest year
+      }
+    });
+};
+
+const fetchAwardWinners = (year, page = 0) => {
+  fetch(`http://${config.server_host}:${config.server_port}/awards/winners?year=${year}&page=${page}`)
+    .then(res => res.json())
+    .then(data => setAwardResults(data));
+};
+
+  // ================================
   // RUN ON PAGE LOAD
   // ================================
   useEffect(() => {
     fetchTrendingSongs();
     fetchStats();
+    fetchYears();
   }, []);
+
+  useEffect(() => {
+  if (selectedYear) {
+    fetchAwardWinners(selectedYear, awardPage);
+  }
+}, [selectedYear, awardPage]);
 
   useEffect(() => {
     async function loadUser() {
@@ -181,6 +215,72 @@ export default function Overview() {
                 <p>{albumCount}</p>
               </div> */}
             </div>
+
+            {/* ================================
+                  AWARDS SECTION
+              ================================ */}
+              <div className="awards-section">
+
+                <h2>Award Winning Songs</h2>
+
+                {/* Year Dropdown */}
+                <select
+                  value={selectedYear}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value);
+                    setAwardPage(0);
+                  }}
+                >
+                  {years.map((y, index) => (
+                    <option key={index} value={y.year}>
+                      {y.year}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Results Table */}
+                <div className="awards-table-container">
+                  <table className="results-table">
+                    <thead>
+                      <tr>
+                        <th>Song</th>
+                        <th>Artist</th>
+                        <th>Award</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {awardResults.map((row, index) => (
+                        <tr key={index}>
+                          <td>{row.song_title}</td>
+                          <td>{row.artist}</td>
+                          <td>{row.award}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                <div className="pagination">
+                  <button
+                    onClick={() => setAwardPage(prev => Math.max(prev - 1, 0))}
+                    disabled={awardPage === 0}
+                  >
+                    Prev
+                  </button>
+
+                  <span>Page {awardPage + 1}</span>
+
+                  <button
+                    onClick={() => setAwardPage(prev => prev + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+
+              </div>
+              {/* Add more divs after this one */}
 
           </div>
         </div>

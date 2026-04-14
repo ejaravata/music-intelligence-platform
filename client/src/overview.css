@@ -26,7 +26,7 @@
   position: sticky;
   top: 0;
   background-color: #1DB954; /* Spotify green */
-  color: #000; /* text color */
+  color: #ddd; /* text color */
 
   padding: 10px;
   text-align: left;
@@ -75,4 +75,36 @@
   font-size: 24px;
   font-weight: bold;
   color: #ddd; /* Spotify green */
+}
+
+.awards-section {
+  margin-top: 60px;
+}
+
+/* Dropdown */
+.awards-section select {
+  margin-bottom: 20px;
+  padding: 8px;
+  font-size: 14px;
+}
+
+/* Table container */
+.awards-table-container {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* Pagination */
+.pagination {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  cursor: pointer;
 }
