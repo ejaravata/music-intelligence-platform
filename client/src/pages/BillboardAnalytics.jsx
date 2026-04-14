@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import "../analytics.css";
 import config from "../config.json";
 import SideMenu from "../components/SideMenu.jsx";
@@ -130,6 +131,30 @@ export default function BillboardAnalytics() {
   ];
 
   useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch(`http://${config.server_host}:${config.server_port}/me`, {
+          credentials: "include",
+        });
+  
+        if (!res.ok) return;
+  
+        const user = await res.json();
+        const fullName =
+          user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : user.name || user.email || "User";
+  
+        setUserName(fullName);
+      } catch (err) {
+        console.error("Failed to load user:", err);
+      }
+    }
+  
+    loadUser();
+  }
+            
+  useEffect(() => {
     fetch(`http://${config.server_host}:${config.server_port}/billboard/genre_popularity_over_time`)
       .then((res) => res.json())
       .then((data) => {
@@ -187,6 +212,18 @@ export default function BillboardAnalytics() {
       )
       .catch((err) => console.log(err));
   }, []);
+
+  async function logout() {
+    try {
+      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+
+    navigate("/", { replace: true });
+  }
 
   const tooltipStyle = {
     backgroundColor: "#000",
@@ -250,7 +287,8 @@ export default function BillboardAnalytics() {
     <div className="analytics-page">
       <Header
         siteName="Billboard Analytics"
-        username="User"
+        username={userName}
+        onLogout={logout}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
       />
 
