@@ -1,13 +1,15 @@
 .overview-content {
   padding: 20px;
+  margin-top: 30vh;
   flex: 1;
 }
 
 /* Scroll container */
 .table-container {
-  height: 400px; /* fixed instead of max-height */
+  height: 400px;
+  width: 900px;
   overflow-y: auto;
-  border: 1px solid #ddd;
+  border: 3px solid #1DB954;
   border-radius: 8px;
 }
 
@@ -28,7 +30,7 @@
 
   padding: 10px;
   text-align: left;
-  border-bottom: 2px solid #14833b; /* darker green accent */
+  border-bottom: 2px solid #14833b;  /*darker green accent */
 }
 
 /* Table cells */
@@ -41,4 +43,36 @@
 /* hover effect with green tint */
 .results-table td:hover {
   background-color: rgba(65, 225, 121, 0.1);
+}
+
+.stats-panel {
+  position: absolute;
+  right: 40px;
+  top: 200px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stat-card {
+  width: 200px;
+  padding: 15px;
+  background-color: #000;
+  border-radius: 10px;
+  text-align: center;
+  border: 3px solid #1DB954;
+
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.stat-card h3 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.stat-card p {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ddd; /* Spotify green */
 }

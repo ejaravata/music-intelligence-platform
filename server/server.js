@@ -20,6 +20,9 @@ app.get('/grammys/top_winning_genres', routes.grammys_top_genres);
 app.get('/search', routes.search);
 app.get('/songs/:song_id/recommendations/genres', routes.recs_from_genres);
 app.get('/songs/:song_id/recommendations/audio_attributes', routes.recs_from_audio_attributes);
+app.get('/stats/song_count', routes.unique_song_count);
+app.get('/stats/artist_count', routes.unique_artist_count);
+app.get('/stats/album_count', routes.unique_album_count);
 
 app.listen(config.server_port, () => {
   console.log(`Server running at http://${config.server_host}:${config.server_port}/`)
