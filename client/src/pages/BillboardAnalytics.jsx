@@ -154,7 +154,7 @@ export default function BillboardAnalytics() {
     }
   
     loadUser();
-  }
+  }, []);
             
   useEffect(() => {
     fetch(`http://${config.server_host}:${config.server_port}/billboard/genre_popularity_over_time`)
