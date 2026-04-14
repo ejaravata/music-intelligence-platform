@@ -1,0 +1,231 @@
+#login-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  box-sizing: border-box;
+}
+
+#login-section .auth-shell {
+  width: 100%;
+  max-width: 520px;
+}
+
+#login-section .auth-card {
+  background: #0b0b0b;
+  border: 1px solid #2a2a2a;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+}
+
+#login-section .auth-title {
+  margin: 0 0 8px 0;
+  font-size: 34px;
+  line-height: 1.1;
+  color: white;
+}
+
+#login-section .auth-subtitle {
+  margin: 0 0 24px 0;
+  color: #a7a7a7;
+  font-size: 15px;
+}
+
+#login-section .auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+#login-section .auth-field label {
+  font-size: 14px;
+  color: #d7d7d7;
+}
+
+#login-section .auth-field input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #3a3a3a;
+  background: #050505;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+#login-section .auth-field input:focus {
+  border-color: #1db954;
+  box-shadow: 0 0 0 3px rgba(29,185,84,0.14);
+  background: #0a0a0a;
+}
+
+#login-section .auth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+#login-section .auth-divider {
+  position: relative;
+  text-align: center;
+  margin: 20px 0;
+}
+
+#login-section .auth-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #242424;
+}
+
+#login-section .auth-divider span {
+  position: relative;
+  padding: 0 12px;
+  background: #0b0b0b;
+  color: #8d8d8d;
+  font-size: 13px;
+}
+
+#login-section .auth-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 18px 0;
+  color: #bcbcbc;
+  font-size: 14px;
+}
+
+#login-section .auth-error {
+  min-height: 20px;
+  margin-top: 12px;
+  color: #ff7b7b;
+  font-size: 14px;
+}
+
+#login-section .primary-btn,
+#login-section .secondary-btn,
+#login-section .google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 15px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+#login-section .primary-btn {
+  background: white;
+  color: #08120c;
+  border: none;
+  font-weight: 700;
+}
+
+#login-section .primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(29,185,84,0.22);
+}
+
+#login-section .secondary-btn {
+  margin-top: 12px;
+  background: transparent;
+  color: #f3f3f3;
+  border: 1px solid #3a3a3a;
+}
+
+#login-section .secondary-btn:hover {
+  background: #141414;
+  border-color: #4a4a4a;
+}
+
+#login-section .auth-google {
+  width: 100%;
+  justify-content: center;
+  margin: 0;
+}
+
+#login-section .google-btn {
+  background: white;
+  border: 1px solid #dadce0;
+  color: #3c4043;
+  font-family: Roboto, Arial, sans-serif;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+#login-section .google-btn:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  background: #f8f9fa;
+}
+
+#login-section .google-btn:active {
+  background: #f1f3f4;
+}
+
+#login-section .button-text {
+  font-weight: 500;
+  color: inherit;
+}
+
+#login-section .google-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+#login-section .google-icon {
+  width: 18px;
+  height: 18px;
+}
+
+#login-section .auth-shell,
+#login-section .auth-title,
+#login-section .auth-subtitle,
+#login-section .auth-field,
+#login-section .auth-field label,
+#login-section .auth-divider,
+#login-section .auth-divider span,
+#login-section .auth-error,
+#login-section .button-text,
+#login-section .google-icon-wrapper {
+  background: transparent !important;
+}
+
+#login-section h1,
+#login-section h2,
+#login-section h3,
+#login-section p,
+#login-section label,
+#login-section span,
+#login-section div {
+  background: transparent;
+}
+
+#login-section .primary-btn {
+  background: white !important;
+  color: #08120c !important;
+}
+
+#login-section .google-btn {
+  background: white !important;
+  color: #3c4043 !important;
+}
+
+#login-section .google-btn *,
+#login-section .primary-btn * {
+  background: transparent !important;
+  color: inherit;
+}
