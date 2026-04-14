@@ -251,7 +251,6 @@ export default function BillboardAnalytics() {
       <Header
         siteName="Billboard Analytics"
         username="User"
-        showSearch={false}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
       />
 

@@ -174,7 +174,6 @@ export default function GrammyAnalytics() {
       <Header
         siteName="Grammy Analytics"
         username="User"
-        showSearch={false}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
       />
 

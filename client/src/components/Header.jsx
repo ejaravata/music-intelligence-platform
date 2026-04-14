@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './Header.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
@@ -25,12 +26,21 @@ export default function Header({
   const [searchType, setSearchType] = useState('Song');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const options = ['Song', 'Artist', 'Album', 'Genre'];
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmedQuery = searchQuery.trim();
     if (trimmedQuery.length < 1) return;
-    onSearch(trimmedQuery, searchType);
+    
+    // If not on home page, navigate to home with search params
+    if (location.pathname !== '/') {
+      navigate(`/?q=${encodeURIComponent(trimmedQuery)}&type=${searchType}`);
+    } else {
+      // On home page, execute search normally
+      onSearch(trimmedQuery, searchType);
+    }
   };
 
   return (

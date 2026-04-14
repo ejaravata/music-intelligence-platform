@@ -1,6 +1,6 @@
 .header {
   display: grid;
-  grid-template-columns: 1fr minmax(240px, 480px) 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
@@ -11,19 +11,21 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
 }
 
 .header-center {
   flex: 1;
   display: flex;
   justify-content: center;
+  min-width: 240px;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  min-width: 80px;
+  white-space: nowrap;
 }
 
 .site-name {

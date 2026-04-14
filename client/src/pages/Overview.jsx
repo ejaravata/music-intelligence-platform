@@ -81,7 +81,6 @@ export default function Overview() {
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
         onSearch={handleSearch}
-        showSearch={false}
       />
 
       <div className={`home-layout${isSideMenuOpen ? '' : ' home-layout--collapsed'}`}>

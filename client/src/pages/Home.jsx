@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header.jsx';
 import SideMenu from '../components/SideMenu.jsx';
 import config from '../config.json';
@@ -18,6 +18,7 @@ export default function Home() {
   const [currentQuery, setCurrentQuery] = useState('');
   const [resultCount, setResultCount] = useState(0);
   const resultsPerPage = 10;
+  const [searchParams] = useSearchParams();
 
   const handleSearch = (query, searchType) => {
     setCurrentPage(0);
@@ -62,6 +63,15 @@ export default function Home() {
         .catch(err => console.error('Artist image fetch error:', err));
     });
   };
+  
+  useEffect(() => {
+    const query = searchParams.get('q');
+    const type = searchParams.get('type');
+    
+    if (query) {
+      handleSearch(query, type || 'Song');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (searchType === 'Artist') {
