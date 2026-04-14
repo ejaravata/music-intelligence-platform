@@ -35,6 +35,18 @@ export default function Details() {
 
     loadUser();
   }, []);
+
+  async function logout() {
+    try {
+      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+
+    navigate("/", { replace: true });
+  }
   
   const handleSearch = (query, searchType) => {
     setCurrentPage(0);
