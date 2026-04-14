@@ -11,6 +11,7 @@ export default function ArtistInfo() {
   const { artistId } = useParams();
   const navigate = useNavigate();
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
+  const [userName, setUserName] = useState("User");
   const [artistImage, setArtistImage] = useState(null);
   const [artistName, setArtistName] = useState('');
   const [songs, setSongs] = useState([]);
@@ -45,6 +46,28 @@ export default function ArtistInfo() {
         .catch(err => console.error('Artist songs fetch error:', err));
     }
   }, [artistId, currentPage, resultsPerPage]);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch(`http://${config.server_host}:${config.server_port}/me`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        const user = await res.json();
+        const fullName =
+          user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : user.name || user.email || "User";
+
+        setUserName(fullName);
+      } catch (err) {
+        console.error("Failed to load user:", err);
+      }
+    }
+  }, []);
 
   const fetchSongImages = () => {
     songs.forEach((song) => {
@@ -130,11 +153,24 @@ export default function ArtistInfo() {
     navigate(`/artist/${artistId}`);
   };
 
+  async function logout() {
+    try {
+      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+
+    navigate("/", { replace: true });
+  }
+
   return (
     <main className="page">
       <Header
         siteName="Artist Info"
-        username="User"
+        username={userName}
+        onLogout={logout}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
       />
