@@ -700,7 +700,40 @@ const billboard_trending_songs = async function(req, res) {
   });
 }
 
-// Route 12: GET /user/top_genres
+const SPOTIFY_OEMBED_URL =
+  'https://open.spotify.com/oembed?url=https://open.spotify.com/track/';
+
+const albumCoverCache = new Map();
+
+async function getSpotifyAlbumCover(trackId) {
+  if (!trackId) return null;
+
+  if (albumCoverCache.has(trackId)) {
+    return albumCoverCache.get(trackId);
+  }
+
+  try {
+    const response = await fetch(`${SPOTIFY_OEMBED_URL}${trackId}`);
+
+    if (!response.ok) {
+      albumCoverCache.set(trackId, null);
+      return null;
+    }
+
+    const data = await response.json();
+    const imageUrl = data.thumbnail_url || null;
+
+    albumCoverCache.set(trackId, imageUrl);
+    return imageUrl;
+  } catch (err) {
+    console.error(`Failed to fetch album cover for ${trackId}:`, err);
+    albumCoverCache.set(trackId, null);
+    return null;
+  }
+}
+
+
+// Route 11: GET /user/top_genres
 //List of top genres for a given user
 const user_top_genres = async function(req, res) {
   const user_id = req.params.user_id;
@@ -708,14 +741,11 @@ const user_top_genres = async function(req, res) {
   const query = `
     SELECT
       aa.genre,
-      ss.subgenre,
       COUNT(DISTINCT uf.spotify_id) AS num_favorites
     FROM user_favorites uf
     JOIN audio_attributes aa ON uf.spotify_id = aa.song_id
-    JOIN songs_subgenres ss ON uf.spotify_id = ss.song_id
     WHERE user_id = $1
-      AND ss.subgenre IS NOT NULL
-    GROUP BY aa.genre, ss.subgenre
+    GROUP BY aa.genre
     ORDER BY num_favorites DESC;
   `;
   connection.query(query, [user_id], (err, data) => {
@@ -729,7 +759,7 @@ const user_top_genres = async function(req, res) {
   });
 }
 
-// Route 13: GET /user/top_albums
+// Route 12: GET /user/top_albums
 //List of top albums for a given user
 const user_top_albums = async function(req, res){
   const page = parseInt(req.query.page ?? '1');
@@ -791,7 +821,7 @@ const user_top_albums = async function(req, res){
   }
 }
 
-// Route 14: GET /user/top_artists
+// Route 13: GET /user/top_artists
 //List of top artists for a given user
 const user_top_artists = async function(req, res){
   const page = parseInt(req.query.page ?? '1');
@@ -857,87 +887,66 @@ const user_top_artists = async function(req, res){
   }
 }
 
-// Route 15: GET /user/favorite_songs
+// Route 14: GET /user/favorite_songs
 //List of favorite songs for a given user ordered by date added (desc)
-const user_favorite_songs = async function(req, res){
-  const page = parseInt(req.query.page ?? '1');
-  const pageSize = Math.min(parseInt(req.query.page_size ?? '10'), 50);
+
+const user_favorite_songs = async function(req, res) {
   const user_id = req.params.user_id;
-  
-  if(!page || page < 1){
-    let query = `
-      SELECT
-        row_number() over (ORDER BY u.date_added DESC) AS row_number,
-        s.song_name,
-        STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
-        a.album_name,
-        u.date_added
-      FROM user_favorites u
-      JOIN spotify_songs s
-        ON u.spotify_id = s.song_id
-      JOIN album a
-        ON s.album_id = a.album_id
-      JOIN public.featured_in fi
-        ON s.song_id = fi.song_id
-      JOIN public.spotify_artists sa
-        ON fi.artist_id = sa.artist_id
-      WHERE u.user_id = $1
-      GROUP BY s.song_id, s.song_name, a.album_name, u.date_added
-      ORDER BY u.date_added DESC
-    `;
 
-    connection.query(query, [user_id], (err, data) => {
-      if(err){
-        console.log(err);
-        res.json([]);
-      }else{
-        res.json(data.rows);
-      }
-    });
-  }else{
-    const offset = Math.max((page - 1) * pageSize, 0);
+  const query = `
+    SELECT
+      s.song_name,
+      STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
+      a.album_name,
+      u.date_added,
+      s.song_id
+    FROM user_favorites u
+    JOIN spotify_songs s
+      ON u.spotify_id = s.song_id
+    JOIN album a
+      ON s.album_id = a.album_id
+    JOIN featured_in fi
+      ON s.song_id = fi.song_id
+    JOIN spotify_artists sa
+      ON fi.artist_id = sa.artist_id
+    WHERE u.user_id = $1
+    GROUP BY s.song_id, s.song_name, a.album_name, u.date_added
+    ORDER BY u.date_added DESC;
+  `;
 
-    let query = `
-      SELECT
-        row_number() over (ORDER BY u.date_added DESC) AS row_number,
-        s.song_name,
-        STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
-        a.album_name,
-        u.date_added
-      FROM user_favorites u
-      JOIN spotify_songs s
-        ON u.spotify_id = s.song_id
-      JOIN album a
-        ON s.album_id = a.album_id
-      JOIN public.featured_in fi
-        ON s.song_id = fi.song_id
-      JOIN public.spotify_artists sa
-        ON fi.artist_id = sa.artist_id
-      WHERE u.user_id = $1
-      GROUP BY s.song_id, s.song_name, a.album_name, u.date_added
-      ORDER BY u.date_added DESC
-      LIMIT $2
-      OFFSET $3
-    `;
+  connection.query(query, [user_id], async (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json([]);
+    }
 
-    connection.query(query, [user_id, pageSize, offset], (err, data) => {
-      if(err){
-        console.log(err);
-        res.json([]);
-      }else{
-        res.json(data.rows);
-      }
-    });
-  }
-}
+    try {
+      const songsWithImages = await Promise.all(
+        data.rows.map(async (song) => {
+          const image_url = await getSpotifyAlbumCover(song.song_id);
+          return {
+            ...song,
+            image_url
+          };
+        })
+      );
 
-// Route 16: GET /user/most_energetic_songs
+      return res.json(songsWithImages);
+    } catch (e) {
+      console.error(e);
+      return res.json(data.rows);
+    }
+  });
+};
+
+// Route 15: GET /user/most_energetic_songs
 //Top 10 most energetic songs for a given user
 const user_most_energetic_songs = async function(req, res) {
   const user_id = req.params.user_id;
- 
+
   const query = `
     SELECT
+      s.song_id,
       s.song_name,
       STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
       aa.energy
@@ -955,24 +964,32 @@ const user_most_energetic_songs = async function(req, res) {
     ORDER BY aa.energy DESC
     LIMIT 10;
   `;
-  connection.query(query, [user_id], (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      console.log(data.rows);
-      res.json(data.rows);
-    }
-  });
-}
 
-// Route 17: GET /user/most_sad_songs
+  try {
+    const data = await connection.query(query, [user_id]);
+
+    const songsWithImages = await Promise.all(
+      data.rows.map(async (song) => ({
+        ...song,
+        image_url: await getSpotifyAlbumCover(song.song_id)
+      }))
+    );
+
+    res.json(songsWithImages);
+  } catch (err) {
+    console.log(err);
+    res.json([]);
+  }
+};
+
+// Route 16: GET /user/most_sad_songs
 //Top 10 most sad songs for a given user
 const user_most_sad_songs = async function(req, res) {
   const user_id = req.params.user_id;
- 
+
   const query = `
     SELECT
+      s.song_id,
       s.song_name,
       STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
       aa.valence
@@ -990,21 +1007,32 @@ const user_most_sad_songs = async function(req, res) {
     ORDER BY aa.valence ASC
     LIMIT 10;
   `;
-  connection.query(query, [user_id], (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      console.log(data.rows);
-      res.json(data.rows);
-    }
-  });
-}
 
-// Route 18: GET /user/music_profile
+  try {
+    const data = await connection.query(query, [user_id]);
+
+    const songsWithImages = await Promise.all(
+      data.rows.map(async (song) => ({
+        ...song,
+        image_url: await getSpotifyAlbumCover(song.song_id)
+      }))
+    );
+
+    res.json(songsWithImages);
+  } catch (err) {
+    console.log(err);
+    res.json([]);
+  }
+};
+
+// Route 17: GET /user/music_profile
 //Combined endpoint that returns everything in one call instead of 6 separate calls
 const user_music_profile = async function(req, res) {
   const user_id = req.params.user_id;
+
+  if (!user_id || user_id === 'undefined') {
+    return res.status(400).json({ error: "Invalid user_id" });
+  }
 
   try {
     const topGenresQuery = `
@@ -1015,7 +1043,6 @@ const user_music_profile = async function(req, res) {
       WHERE uf.user_id = $1 AND ss.subgenre IS NOT NULL
       GROUP BY aa.genre, ss.subgenre
       ORDER BY count DESC
-      LIMIT 10;
     `;
 
     const topArtistsQuery = `
@@ -1027,7 +1054,6 @@ const user_music_profile = async function(req, res) {
       WHERE u.user_id = $1
       GROUP BY sa.artist_name
       ORDER BY count DESC
-      LIMIT 10;
     `;
 
     const topAlbumsQuery = `
@@ -1038,7 +1064,6 @@ const user_music_profile = async function(req, res) {
       WHERE u.user_id = $1
       GROUP BY a.album_name
       ORDER BY count DESC
-      LIMIT 10;
     `;
 
     const recentSongsQuery = `
@@ -1046,7 +1071,8 @@ const user_music_profile = async function(req, res) {
         s.song_name,
         STRING_AGG(DISTINCT sa.artist_name, ', ') AS artists,
         a.album_name,
-        u.date_added
+        u.date_added,
+        s.song_id
       FROM user_favorites u
       JOIN spotify_songs s ON u.spotify_id = s.song_id
       JOIN album a ON s.album_id = a.album_id
@@ -1054,15 +1080,15 @@ const user_music_profile = async function(req, res) {
       JOIN spotify_artists sa ON fi.artist_id = sa.artist_id
       WHERE u.user_id = $1
       GROUP BY s.song_id, s.song_name, a.album_name, u.date_added
-      ORDER BY u.date_added DESC
-      LIMIT 10;
+      ORDER BY u.date_added DESC;
     `;
 
     const energeticQuery = `
       SELECT
         s.song_name,
         STRING_AGG(DISTINCT sa.artist_name, ', ') AS artists,
-        aa.energy
+        aa.energy,
+        s.song_id
       FROM user_favorites u
       JOIN spotify_songs s ON u.spotify_id = s.song_id
       JOIN featured_in fi ON s.song_id = fi.song_id
@@ -1078,7 +1104,8 @@ const user_music_profile = async function(req, res) {
       SELECT
         s.song_name,
         STRING_AGG(DISTINCT sa.artist_name, ', ') AS artists,
-        aa.valence
+        aa.valence,
+        s.song_id
       FROM user_favorites u
       JOIN spotify_songs s ON u.spotify_id = s.song_id
       JOIN featured_in fi ON s.song_id = fi.song_id
@@ -1116,13 +1143,34 @@ const user_music_profile = async function(req, res) {
       connection.query(summaryQuery, [user_id])
     ]);
 
+    const recentSongsWithImages = await Promise.all(
+      recentSongs.rows.map(async (song) => ({
+        ...song,
+        image_url: await getSpotifyAlbumCover(song.song_id)
+      }))
+    );
+
+    const energeticSongsWithImages = await Promise.all(
+      energeticSongs.rows.map(async (song) => ({
+        ...song,
+        image_url: await getSpotifyAlbumCover(song.song_id)
+      }))
+    );
+
+    const sadSongsWithImages = await Promise.all(
+      sadSongs.rows.map(async (song) => ({
+        ...song,
+        image_url: await getSpotifyAlbumCover(song.song_id)
+      }))
+    );
+
     res.json({
       top_genres: topGenres.rows,
       top_artists: topArtists.rows,
       top_albums: topAlbums.rows,
-      recent_songs: recentSongs.rows,
-      most_energetic: energeticSongs.rows,
-      most_sad: sadSongs.rows,
+      recent_songs: recentSongsWithImages,
+      most_energetic: energeticSongsWithImages,
+      most_sad: sadSongsWithImages,
       summary: summary.rows[0]
     });
 
@@ -1178,6 +1226,8 @@ const unique_album_count = async function(req, res) {
   });
 };
 
+module.exports.connection = connection;
+
 //make sure to add functions to module exports here
 module.exports = {
   billboard_trending_songs,
@@ -1203,5 +1253,6 @@ module.exports = {
   recs_from_genres,
   unique_song_count,
   unique_artist_count,
-  unique_album_count
+  unique_album_count,
+  connection
 }
