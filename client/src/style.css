@@ -88,6 +88,17 @@ body {
   display: none;
 }
 
+.artists-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-height: 0;
+}
+
+.artists-list:empty {
+  display: none;
+}
+
 .song-card, .artist-card {
   display: flex;
   align-items: center;
@@ -174,8 +185,10 @@ body {
 }
 
 .info-container {
-  padding: 24px;
-  max-width: 1200px;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .info-header {
@@ -183,6 +196,7 @@ body {
   gap: 24px;
   margin-bottom: 40px;
   align-items: center;
+  padding: 24px;
 }
 
 .info-thumbnail {
@@ -221,16 +235,6 @@ body {
   margin: 0;
   font-size: 16px;
   color: #999;
-}
-
-.info-section {
-  margin-top: 40px;
-}
-
-.section-title {
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 20px;
 }
 
 @media (max-width: 768px) {
