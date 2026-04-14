@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header.jsx';
 import SideMenu from '../components/SideMenu.jsx';
 import config from '../config.json';
@@ -15,6 +16,9 @@ export default function Overview() {
   const [albumCount, setAlbumCount] = useState(0);
 
   const [loading, setLoading] = useState(false);
+  
+  const [userName, setUserName] = useState("User");
+  const navigate = useNavigate();
 
   // ================================
   // SEARCH FUNCTION (cleaned)
@@ -73,11 +77,50 @@ export default function Overview() {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch(`http://${config.server_host}:${config.server_port}/me`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) return;
+
+        const user = await res.json();
+        const fullName =
+          user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : user.name || user.email || "User";
+
+        setUserName(fullName);
+      } catch (err) {
+        console.error("Failed to load user:", err);
+      }
+    }
+
+    loadUser();
+    fetchTrendingSongs();
+    fetchStats();
+  }, []);
+
+  async function logout() {
+    try {
+      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+
+    navigate("/", { replace: true });
+  }
+
   return (
     <main className="page">
       <Header
         siteName="Overview"
-        username="User"
+        username={userName}
+        onLogout={logout}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
         onSearch={handleSearch}
