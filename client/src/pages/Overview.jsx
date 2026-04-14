@@ -91,7 +91,7 @@ export default function Overview() {
 
         {/* MAIN CONTENT */}
         <div className="overview-content">
-          <h2>Trending Songs</h2>
+          <h2>Billboard Trending Songs</h2>
 
           {loading && <p>Loading trending songs...</p>}
 
@@ -125,12 +125,12 @@ export default function Overview() {
             {/* STATS PANEL */}
             <div className="stats-panel">
               <div className="stat-card">
-                <h3>Unique Song Count</h3>
+                <h3>Number of Songs in Data</h3>
                 <p>{songCount}</p>
               </div>
 
               <div className="stat-card">
-                <h3>Unique Artist Count</h3>
+                <h3>Number of Artists in Data</h3>
                 <p>{artistCount}</p>
               </div>
 
