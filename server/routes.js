@@ -77,6 +77,131 @@ const search = async function(req, res) {
   }
 }
 
+const artist_info = async function(req, res) {
+  const id = req.params.id;
+  
+  connection.query(`
+    SELECT
+      artist_id,
+      artist_name,
+      popularity_score
+    FROM spotify_artists
+    WHERE artist_id = $1;`, [id],
+    (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data.rows[0]);
+      }
+    });
+}
+
+//Route 4: GET /artist_songs?id={id}&limit={limit}&offset={offset}
+const artist_songs = async function(req, res) {
+  const id = req.query.id;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
+
+  connection.query(`
+    WITH artist_songs AS (
+      SELECT DISTINCT
+        s.song_id,
+        s.song_name,
+        MAX(au.popularity) AS popularity
+      FROM spotify_songs s
+        JOIN featured_in f ON s.song_id = f.song_id
+        JOIN audio_attributes au ON s.song_id = au.song_id
+      WHERE f.artist_id = $1
+      GROUP BY
+        s.song_id,
+        s.song_name
+      ORDER BY popularity DESC
+      LIMIT $2 OFFSET $3
+    )
+    SELECT
+      s.song_id,
+      s.song_name,
+      JSON_AGG(JSON_BUILD_OBJECT('artist_id', f.artist_id, 'artist_name', a.artist_name)) AS artists
+    FROM artist_songs s
+      JOIN featured_in f ON s.song_id = f.song_id
+      JOIN spotify_artists a ON f.artist_id = a.artist_id
+    GROUP BY
+      s.song_id,
+      s.song_name
+    ORDER BY MAX(a.popularity_score) DESC;`, [id, limit, offset],
+    (err, data) => {
+      if (err) {
+      console.log(err);
+      res.json([]);
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
+//Route 4: GET /related?id={id}&type={song|artist}
+const related = async function(req, res) {
+  const id = req.query.id;
+  // const type = req.query.type;
+  
+  connection.query(`
+    WITH individual_artist AS (
+      SELECT
+        artist_id,
+        genre,
+        popularity_score,
+        num_followers,
+        (
+          SELECT (MIN(year) + MAX(year)) / 2
+          FROM spotify_songs s
+            JOIN featured_in f ON s.song_id = f.song_id
+          WHERE artist_id = $1
+        ) AS avg_release_year
+      FROM spotify_artists
+      WHERE artist_id = $1
+    ),
+    avg_release_years AS (
+      SELECT
+        a.artist_id,
+        a.artist_name,
+        a.popularity_score,
+        a.num_followers,
+        (MIN(s.year) + MAX(s.year)) / 2 AS avg_release_year
+      FROM spotify_artists a
+        JOIN featured_in f ON a.artist_id = f.artist_id
+        JOIN spotify_songs s ON f.song_id = s.song_id
+        JOIN artists_subgenres sg ON a.artist_id = sg.artist_id
+      WHERE
+        a.genre = (SELECT genre FROM individual_artist) AND
+        a.artist_id <> (SELECT artist_id FROM individual_artist)
+      GROUP BY
+        a.artist_id,
+        a.artist_name,
+        a.popularity_score,
+        a.num_followers
+    )
+
+    SELECT
+      artist_id,
+      artist_name
+    FROM avg_release_years y
+    ORDER BY
+      ABS(y.avg_release_year - (SELECT avg_release_year FROM individual_artist)),
+      ABS(y.popularity_score - (SELECT popularity_score FROM individual_artist)),
+      ABS(y.num_followers - (SELECT num_followers FROM individual_artist))
+    LIMIT 5;`, [id],
+    (err, data) => {
+      if (err) {
+      console.log(err);
+      res.json([]);
+    } else {
+      res.json(data.rows);
+    }
+  });
+}
+
+
 //Route 2: GET /billboard/annual_top_songs
 const billboard_top_five = async function(req, res) {
 /* Returns the top ranked five songs with the most billboard appearances per year. In addition, this will
@@ -985,6 +1110,9 @@ module.exports = {
   grammys_top_artists,
   grammys_top_genres,
   search,
+  artist_info,
+  artist_songs,
+  related,
   user_top_genres,
   user_top_albums,
   user_top_artists,

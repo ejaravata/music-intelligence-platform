@@ -104,7 +104,6 @@ export default function Home() {
   };
 
   const hasMoreResults = resultCount === resultsPerPage;
-  const totalPages = Math.ceil(resultCount / resultsPerPage) || 1;
 
   return (
     <main className="page">

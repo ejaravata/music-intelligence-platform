@@ -29,6 +29,11 @@ body {
   gap: 18px;
 }
 
+.info-container .home-grid {
+  margin-top: 18px;
+  padding: 0 24px 24px 24px;
+}
+
 .grid-column {
   display: flex;
   flex-direction: column;
@@ -194,7 +199,7 @@ body {
 .info-header {
   display: flex;
   gap: 24px;
-  margin-bottom: 40px;
+  margin-bottom: 16px;
   align-items: center;
   padding: 24px;
 }
@@ -235,6 +240,50 @@ body {
   margin: 0;
   font-size: 16px;
   color: #999;
+}
+
+.song-attributes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid white;
+  border-radius: 12px;
+}
+
+.song-attributes-section h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.attributes-chart-wrapper {
+  width: 100%;
+  background: #000;
+}
+
+.song-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.metadata-line {
+  margin: 0;
+  font-size: 14px;
+  color: #fff;
+}
+
+.metadata-label {
+  font-weight: 600;
+}
+
+.thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 
 @media (max-width: 768px) {
