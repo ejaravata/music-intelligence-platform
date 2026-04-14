@@ -9,8 +9,6 @@ const bcrypt = require('bcrypt');
 
 const app = express();
 const path = require("path");
-
-const app = express();
 app.use(cors({
   origin: '*',
   credentials: true
