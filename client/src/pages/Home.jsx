@@ -181,6 +181,7 @@ function ResultsColumn({
               key={result.artist_id}
               artist={result}
               image={artistImages[result.artist_id]}
+              onClick={() => navigate(`/artist/${result.artist_id}`)}
             />
           ) : (
             <SongCard
@@ -245,13 +246,13 @@ function SongCard({ song, thumbnail, onClick }) {
   );
 }
 
-function ArtistCard({ artist, image }) {
+function ArtistCard({ artist, image, onClick }) {
   const handleImageError = (e) => {
     e.target.style.display = 'none';
   };
 
   return (
-    <div className="artist-card">
+    <div className="artist-card" onClick={onClick}>
       {image && (
         <img
           src={image}
