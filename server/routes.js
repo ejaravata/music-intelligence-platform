@@ -1226,6 +1226,50 @@ const unique_album_count = async function(req, res) {
   });
 };
 
+// Route 22: GET /awards/years
+//grabs all unique years for dropdown from grammy songs
+const get_award_years = async function(req, res) {
+  connection.query(`
+    SELECT DISTINCT year
+    FROM grammy_songs
+    ORDER BY year DESC;
+  `, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json([]);
+    } else {
+      res.json(data.rows);
+    }
+  });
+};
+
+
+// Route 23: GET /awards/winners
+//gets all the winners given a specific year
+const get_award_winners = async function(req, res) {
+  const year = req.query.year;
+  const page = parseInt(req.query.page) || 0;
+  const pageSize = 10;
+  const offset = page * pageSize;
+
+  connection.query(`
+    SELECT song_title, artist, award
+    FROM grammy_songs
+    WHERE winner = true
+      AND artist != 'Not Available'
+      AND year = $1
+    ORDER BY award ASC
+    LIMIT $2 OFFSET $3;
+  `, [year, pageSize, offset], (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json([]);
+    } else {
+      res.json(data.rows);
+    }
+  });
+};
+
 module.exports.connection = connection;
 
 //make sure to add functions to module exports here
@@ -1254,5 +1298,7 @@ module.exports = {
   unique_song_count,
   unique_artist_count,
   unique_album_count,
+  get_award_years,
+  get_award_winners,
   connection
 }
