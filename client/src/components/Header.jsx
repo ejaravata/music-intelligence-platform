@@ -25,7 +25,7 @@ export default function Header({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('Song');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const options = ['Song', 'Artist', 'Album', 'Genre'];
+  const options = ['Song', 'Artist'];
 
   const handleSubmit = (e) => {
     e.preventDefault();
