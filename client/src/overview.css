@@ -95,7 +95,6 @@
   color: #fff;
 }
 
-/* Dropdown (FIXED DARK MODE) */
 .awards-section select {
   margin-bottom: 20px;
   padding: 8px;
@@ -291,7 +290,7 @@
 ================================ */
 .song-list {
   height: 320px;
-  width: 400px;
+  width: 700px;
   overflow-y: auto;
 
   display: flex;
