@@ -33,6 +33,9 @@ const search = async function(req, res) {
     return res.json([]);
   }
 
+  // Use prefix search for single letter, substring search otherwise
+  const likePattern = query.length === 1 ? query + '%' : '%' + query + '%';
+
   if (type === 'songs') {
     connection.query(`SELECT
                         s.song_id,
@@ -42,12 +45,12 @@ const search = async function(req, res) {
                         JOIN featured_in f ON s.song_id = f.song_id
                         JOIN spotify_artists a ON f.artist_id = a.artist_id
                         JOIN audio_attributes au ON s.song_id = au.song_id
-                      WHERE s.song_name ILIKE '%' || $1 || '%'
+                      WHERE LOWER(s.song_name) LIKE $1
                       GROUP BY
                         s.song_id,
                         s.song_name
                       ORDER BY MAX(au.popularity) DESC
-                      LIMIT $2 OFFSET $3;`, [query, limit, offset],
+                      LIMIT $2 OFFSET $3;`, [likePattern, limit, offset],
                       (err, data) => {
       if (err) {
         console.log(err);
@@ -61,9 +64,9 @@ const search = async function(req, res) {
                         artist_id,
                         artist_name
                       FROM spotify_artists
-                      WHERE artist_name ILIKE '%' || $1 || '%'
+                      WHERE LOWER(artist_name) LIKE $1
                       ORDER BY popularity_score DESC
-                      LIMIT $2 OFFSET $3;`, [query, limit, offset],
+                      LIMIT $2 OFFSET $3;`, [likePattern, limit, offset],
                       (err, data) => {
       if (err) {
         console.log(err);
