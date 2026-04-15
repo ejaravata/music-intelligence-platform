@@ -1,39 +1,116 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const GitHubStrategy = require('passport-github2').Strategy;
 const { connection } = require('../routes');
 
+
+/*
+// Google OAuth
+*/
 passport.use(new GoogleStrategy({
-  clientID: '24877399208-6ma7c58jvfstb7u7ga98mohpm24sebct.apps.googleusercontent.com',
-  clientSecret: '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',
-  callbackURL: 'http://localhost:8080/auth/google/callback'
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:8080/auth/google/callback',
 }, (accessToken, refreshToken, profile, done) => {
   connection.query(
-    `SELECT * FROM users WHERE google_id = $1`,
-    [profile.id],
-    (err, data) => {
-      if (err) return done(err);
+  `SELECT * FROM users WHERE google_id = $1 OR email = $2`,
+  [profile.id, profile.emails?.[0]?.value],
+  (err, data) => {
+    if (err) return done(err);
 
-      if (data.rows.length) {
-        return done(null, data.rows[0]);
+    if (data.rows.length) {
+      const existingUser = data.rows[0];
+
+      if (!existingUser.google_id) {
+        connection.query(
+          `UPDATE users
+           SET google_id = $1
+           WHERE id = $2
+           RETURNING *`,
+          [profile.id, existingUser.id],
+          (updateErr, updateResult) => {
+            if (updateErr) return done(updateErr);
+            return done(null, updateResult.rows[0]);
+          }
+        );
+        return;
       }
 
+      return done(null, existingUser);
+    }
+
+    connection.query(
+      `INSERT INTO users (email, google_id, name)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [profile.emails?.[0]?.value, profile.id, profile.displayName],
+      (insertErr, result) => {
+        if (insertErr) return done(insertErr);
+        return done(null, result.rows[0]);
+      }
+    );
+  }
+);
+}));
+
+/*
+// GitHub OAuth
+*/
+passport.use(
+  new GitHubStrategy(
+    {
+      clientID: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      callbackURL: process.env.GITHUB_CALLBACK_URL || 'http://localhost:8080/auth/github/callback',
+    },
+    (accessToken, refreshToken, profile, done) => {
+      const githubEmail = profile.emails?.[0]?.value || null;
+      const githubName = profile.displayName || profile.username || 'GitHub User';
+
       connection.query(
-        `INSERT INTO users (email, google_id, name)
-         VALUES ($1, $2, $3)
-         RETURNING *`,
-        [
-          profile.emails[0].value,
-          profile.id,
-          profile.displayName
-        ],
-        (err, result) => {
+        `SELECT * FROM users WHERE github_id = $1 OR email = $2`,
+        [profile.id, githubEmail],
+        (err, data) => {
           if (err) return done(err);
-          return done(null, result.rows[0]);
+
+          if (data.rows.length) {
+            const existingUser = data.rows[0];
+
+            // Link GitHub if missing
+            if (!existingUser.github_id) {
+              connection.query(
+                `UPDATE users
+                SET github_id = $1
+                WHERE id = $2
+                RETURNING *`,
+                [profile.id, existingUser.id],
+                (updateErr, updateResult) => {
+                  if (updateErr) return done(updateErr);
+                  return done(null, updateResult.rows[0]);
+                }
+              );
+              return;
+            }
+
+            return done(null, existingUser);
+          }
+
+          // Insert new user
+          connection.query(
+            `INSERT INTO users (email, github_id, name)
+            VALUES ($1, $2, $3)
+            RETURNING *`,
+            [githubEmail, profile.id, githubName],
+            (insertErr, result) => {
+              if (insertErr) return done(insertErr);
+              return done(null, result.rows[0]);
+            }
+          );
         }
       );
     }
-  );
-}));
+  )
+);
 
 passport.serializeUser((user, done) => {
   console.log("serializeUser user:", user);
