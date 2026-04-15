@@ -253,7 +253,7 @@ export default function GrammyAnalytics() {
                 <div className="year-slider-label">{selectedYear}</div>
               </div>
 
-              <div className="chart-wrapper">
+              <div className="analytics-chart-wrapper">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={cumulativeGenreData}
@@ -301,7 +301,7 @@ export default function GrammyAnalytics() {
                 Note: wins only accounts for artist, song, and album awards. 
                 No miscellaneous awards are included, such as "Best Performance" or "Best Music Video".
               </p>
-              <div className="chart-wrapper">
+              <div className="analytics-chart-wrapper">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topArtistData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -346,7 +346,7 @@ export default function GrammyAnalytics() {
                 Note: wins only accounts for artist, song, and album awards. 
                 No miscellaneous awards are included, such as "Best Performance" or "Best Music Video".
               </p>
-              <div className="chart-wrapper">
+              <div className="analytics-chart-wrapper">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topGenreData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" />
