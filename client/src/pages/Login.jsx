@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../auth.css";
 
 const BASE_URL = "http://localhost:8080";
 
 export default function Login({ setUser }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [mode, setMode] = useState("login");
 
@@ -44,6 +45,17 @@ export default function Login({ setUser }) {
     checkUser();
   }, [navigate, setUser]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const error = params.get("error");
+
+    if (error) {
+      setMode("login");
+      setLoginError(error);
+      navigate("/login", { replace: true });
+    }
+  }, [location.search, navigate]);
+
   function showLogin() {
     setMode("login");
     setLoginError("");
@@ -58,6 +70,10 @@ export default function Login({ setUser }) {
 
   function googleLogin() {
     window.location.href = `${BASE_URL}/auth/google`;
+  }
+
+  function githubLogin() {
+    window.location.href = `${BASE_URL}/auth/github`;
   }
 
   async function manualLogin() {
@@ -227,31 +243,49 @@ export default function Login({ setUser }) {
               <div className="auth-divider">
                 <span>or</span>
               </div>
+              
+              <div className="auth-actions">
+                <button
+                  type="button"
+                  className="google-btn auth-google"
+                  onClick={googleLogin}
+                  disabled={isSubmitting}
+                >
+                  <span className="auth-provider-icon-wrapper">
+                    <img
+                      className="auth-provider-icon"
+                      src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                      alt="Google"
+                    />
+                  </span>
+                  <span className="button-text">Continue with Google</span>
+                </button>
 
-              <button
-                type="button"
-                className="google-btn auth-google"
-                onClick={googleLogin}
-                disabled={isSubmitting}
-              >
-                <span className="google-icon-wrapper">
-                  <img
-                    className="google-icon"
-                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                    alt="Google"
-                  />
-                </span>
-                <span className="button-text">Continue with Google</span>
-              </button>
+                <button
+                  type="button"
+                  className="github-btn auth-github"
+                  onClick={githubLogin}
+                  disabled={isSubmitting}
+                >
+                  <span className="auth-provider-icon-wrapper">
+                    <img
+                      className="auth-provider-icon"
+                      src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+                      alt="GitHub"
+                    />
+                  </span>
+                  <span className="button-text">Continue with GitHub</span>
+                </button>
 
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={showSignup}
-                disabled={isSubmitting}
-              >
-                Create an account
-              </button>
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={showSignup}
+                  disabled={isSubmitting}
+                >
+                  Create an account
+                </button>
+              </div>
 
               <div className="auth-error">{loginError}</div>
             </>
