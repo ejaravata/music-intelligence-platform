@@ -1,8 +1,9 @@
+import config from "./config.json";
+
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const GitHubStrategy = require('passport-github2').Strategy;
 const { connection } = require('../routes');
-
 
 /*
 // Google OAuth
@@ -10,7 +11,7 @@ const { connection } = require('../routes');
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:8080/auth/google/callback',
+  callbackURL: process.env.GOOGLE_CALLBACK_URL || '${config.frontend_url}/auth/google/callback',
 }, (accessToken, refreshToken, profile, done) => {
   connection.query(
   `SELECT * FROM users WHERE google_id = $1 OR email = $2`,
@@ -61,7 +62,7 @@ passport.use(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: process.env.GITHUB_CALLBACK_URL || 'http://localhost:8080/auth/github/callback',
+      callbackURL: process.env.GITHUB_CALLBACK_URL || '${config.frontend_url}/auth/github/callback',
     },
     (accessToken, refreshToken, profile, done) => {
       const githubEmail = profile.emails?.[0]?.value || null;
