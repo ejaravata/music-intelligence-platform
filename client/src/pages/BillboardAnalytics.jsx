@@ -328,7 +328,7 @@ export default function BillboardAnalytics() {
                 <div className="year-slider-label">{selectedYear}</div>
               </div>
 
-              <div className="chart-wrapper">
+              <div className="analytics-chart-wrapper">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={yearlyGenreData}
@@ -375,7 +375,7 @@ export default function BillboardAnalytics() {
                 (how many times they show up).
               </p>
 
-              <div className="chart-wrapper">
+              <div className="analytics-chart-wrapper">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topArtistData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -425,7 +425,7 @@ export default function BillboardAnalytics() {
                 Year is chosen by the slider in the above chart. If you hover over a bar, you can also see the artist(s).
               </p>
 
-              <div className="chart-wrapper">
+              <div className="analytics-chart-wrapper">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={selectedYearTopSongs}
