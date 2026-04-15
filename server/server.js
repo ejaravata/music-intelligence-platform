@@ -298,6 +298,7 @@ app.get('/artist_songs', routes.artist_songs);
 app.get('/related', routes.related);
 app.get('/songs/:song_id/recommendations/genres', routes.recs_from_genres);
 app.get('/songs/:song_id/recommendations/audio_attributes', routes.recs_from_audio_attributes);
+app.get('/user/:user_id/recommendations/audio_attributes', routes.user_recs_from_audio_attributes);
 app.get('/stats/song_count', routes.unique_song_count);
 app.get('/stats/artist_count', routes.unique_artist_count);
 app.get('/stats/album_count', routes.unique_album_count);
