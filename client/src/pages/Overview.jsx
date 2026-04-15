@@ -35,6 +35,7 @@ export default function Overview() {
   const [loading, setLoading] = useState(false);
   //user login stuff
   const [userName, setUserName] = useState("User");
+  //need this for navigating to other pages
   const navigate = useNavigate();
 
   // ================================
@@ -207,7 +208,7 @@ const fetchAudioDistribution = (attr) => {
     navigate("/", { replace: true });
   }
   //do not remove, used for audio attributes chart
-    const maxCount = Math.max(...audioData.map(d => d.count), 1);
+    const maxCount = audioData.length > 0 ? Math.max(...audioData.map(d => d.count)) : 1;
   return (
     <main className="page">
       <Header
@@ -245,7 +246,15 @@ const fetchAudioDistribution = (attr) => {
 
                           {/* Info */}
                           <div className="song-info">
-                            <div className="song-title">{row.song_name}</div>
+                            {/* Makes songs navigated to their own page, geez this was complicated*/}
+                            {/* <div className="song-title">{row.song_name}</div> */}
+                            <div
+                                  className="song-title"
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={() => navigate(`/song/${row.song_id}`)}
+                                >
+                                  {row.song_name}
+                                </div>
                             <div className="song-artist">{row.string_agg}</div>
                           </div>
 
@@ -300,7 +309,13 @@ const fetchAudioDistribution = (attr) => {
 
                             {/* Song Info */}
                             <div className="top-song-info">
-                              <div className="top-song-title">{row.song_name}</div>
+                              <div
+                                  className="top-song-title"
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={() => navigate(`/song/${row.song_id}`)}
+                                >
+                                  {row.song_name}
+                                </div>
                               <div className="top-song-meta">
                                 {row.artist_name} • {row.album_name}
                               </div>
