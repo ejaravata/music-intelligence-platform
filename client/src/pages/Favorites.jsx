@@ -277,7 +277,7 @@ export default function Favorites() {
   return (
     <div className="favorites-page">
       <Header
-        siteName="CIS5500 Final Project: User Favorites"
+        siteName="Favorites"
         username={userName}
         onLogout={logout}
         showSearch={false}
