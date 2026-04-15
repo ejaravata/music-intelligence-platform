@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const config = require('./config');
@@ -62,6 +63,11 @@ app.get('/auth/google',
   })
 );
 
+// Github login
+app.get('/auth/github',
+  passport.authenticate('github', { scope: ['user:email'] })
+);
+
 //Me
 app.get('/me', (req, res) => {
   console.log("SESSION USER:", req.user); // 👈 ADD THIS
@@ -73,7 +79,6 @@ app.get('/me', (req, res) => {
   return res.status(401).json(null);
 });
 
-
 // Callback
 app.get(
   '/auth/google/callback',
@@ -82,6 +87,17 @@ app.get(
     return res.redirect('/');
   }
 );
+
+// Callback
+app.get(
+  '/auth/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login' }),
+  (req, res) => {
+    return res.redirect('/');
+  }
+);
+
+
 
 // Logout
 app.get('/logout', (req, res, next) => {
