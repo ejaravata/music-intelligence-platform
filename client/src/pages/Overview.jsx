@@ -211,29 +211,24 @@ useEffect(() => {
           <div className="overview-main">
 
             {/* TABLE */}
-            <div className="table-container">
-              <table className="results-table">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Song</th>
-                    <th>Artist(s)</th>
-                    <th>Week</th>
-                  </tr>
-                </thead>
+           <div className="song-list">
+                {queryResults.map((row, index) => (
+                  <div className="song-card" key={index}>
 
-                <tbody>
-                  {queryResults.map((row, index) => (
-                    <tr key={index}>
-                      <td>{row.current_rank}</td>
-                      <td>{row.song_name}</td>
-                      <td>{row.string_agg}</td>
-                      <td>{row.week_ending_date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    {/* Rank */}
+                    <div className="song-rank">
+                      #{row.current_rank}
+                    </div>
+
+                    {/* Info */}
+                    <div className="song-info">
+                      <div className="song-title">{row.song_name}</div>
+                      <div className="song-artist">{row.string_agg}</div>
+                    </div>
+
+                  </div>
+                ))}
+              </div>
 
             {/* STATS PANEL */}
             <div className="stats-panel">
@@ -246,11 +241,6 @@ useEffect(() => {
                 <h3>Number of Artists in Data</h3>
                 <p>{artistCount}</p>
               </div>
-
-              {/* <div className="stat-card">
-                <h3>Unique Album Count</h3>
-                <p>{albumCount}</p>
-              </div> */}
             </div>
 
             {/* ================================
