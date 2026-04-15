@@ -916,14 +916,16 @@ const billboard_artists = async function(req, res) {
   });
 }
 
-// Route 10: GET /billboard/trending_songs - Lexi Implement Route
-//Used in Home/Overview Page
+// Route 10: GET /billboard/trending_songs
 const billboard_trending_songs = async function(req, res) {
   /*
    * Retrieves the most recent Billboard chart entries as of 2025 along with their current ranking 
    * and associated artists to highlight currently trending songs. This provides the user with a 
    * snapshot of what songs are popular right now. 
    */
+  const page = parseInt(req.query.page) || 0;
+  const pageSize = 5;
+  const offset = page * pageSize;
 
   connection.query(`SELECT DISTINCT
                       s.song_name,
@@ -935,8 +937,9 @@ const billboard_trending_songs = async function(req, res) {
                     JOIN spotify_artists sa ON b.artist_id = sa.artist_id
                     WHERE b.week_ending_date = (SELECT MAX(b2.week_ending_date) FROM billboard_chart b2)
                     GROUP BY s.song_name, b.current_rank, b.week_ending_date
-                    ORDER BY b.current_rank ASC;`, 
-    (err, data) => {
+                    ORDER BY b.current_rank ASC
+                    LIMIT $1 OFFSET $2;`, 
+                    [pageSize, offset], (err, data) =>{
     if (err) {
       console.log(err);
       res.json({});
