@@ -68,6 +68,8 @@ export default function SongInfo() {
   const [tempo, setTempo] = useState('');
   const [loudness, setLoudness] = useState('');
   const [userName, setUserName] = useState("User");
+  const [relatedSongs, setRelatedSongs] = useState([]);
+  const [relatedSongImages, setRelatedSongImages] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -133,6 +135,38 @@ export default function SongInfo() {
     }
   }, [songId]);
 
+  useEffect(() => {
+    if (songId) {
+      fetch(`${API_BASE_URL}/songs/${songId}/recommendations/audio_attributes`)
+        .then(res => res.json())
+        .then(data => {
+          console.log('Related songs response for', songId, ':', data);
+          setRelatedSongs(data);
+        })
+        .catch(err => console.error('Related songs fetch error:', err));
+    }
+  }, [songId]);
+
+  const fetchRelatedSongImages = () => {
+    relatedSongs.forEach((song) => {
+      fetch(`${SPOTIFY_OEMBED_URL}${song.song_id}`)
+        .then(res => res.json())
+        .then(data => {
+          setRelatedSongImages(prev => ({
+            ...prev,
+            [song.song_id]: data.thumbnail_url
+          }));
+        })
+        .catch(err => console.error('Image fetch error:', err));
+    });
+  };
+
+  useEffect(() => {
+    if (relatedSongs.length > 0) {
+      fetchRelatedSongImages();
+    }
+  }, [relatedSongs]);
+
   const attributeColors = [
     '#e6194B',
     '#f58231',
@@ -155,19 +189,13 @@ export default function SongInfo() {
     { name: 'Popularity', value: Math.round(songData.popularity ?? 0), fill: attributeColors[7] }
   ] : [];
 
-  const relatedSongs = [
-    { song_id: '1', song_name: 'Related Song 1', artists: 'Artist Name' },
-    { song_id: '2', song_name: 'Related Song 2', artists: 'Artist Name' },
-    { song_id: '3', song_name: 'Related Song 3', artists: 'Artist Name' },
-    { song_id: '4', song_name: 'Related Song 4', artists: 'Artist Name' },
-    { song_id: '5', song_name: 'Related Song 5', artists: 'Artist Name' }
-  ];
-
-  const songGenres = ['Pop', 'Electronic'];
-  const musicKey = 'C Major';
-
   const handleSongClick = (songId) => {
-    // TODO: click to view song details
+    navigate(`/song/${songId}`);
+  };
+
+  const handleArtistClick = (e, artistId) => {
+    e.stopPropagation();
+    navigate(`/artist/${artistId}`);
   };
 
   return (
@@ -254,19 +282,13 @@ export default function SongInfo() {
                 </div>
                 <div className="songs-list">
                   {relatedSongs.map((song) => (
-                    <div
+                    <SongCard
                       key={song.song_id}
-                      className="song-card"
+                      song={song}
+                      thumbnail={relatedSongImages[song.song_id]}
                       onClick={() => handleSongClick(song.song_id)}
-                    >
-                      <div className="song-thumbnail placeholder-icon">
-                        <i className="fas fa-music"></i>
-                      </div>
-                      <div className="song-info">
-                        <p className="song-name">{song.song_name}</p>
-                        <p className="artists">{song.artists}</p>
-                      </div>
-                    </div>
+                      onArtistClick={handleArtistClick}
+                    />
                   ))}
                 </div>
               </div>
@@ -275,5 +297,48 @@ export default function SongInfo() {
         </section>
       </div>
     </main>
+  );
+}
+
+function SongCard({ song, thumbnail, onClick, onArtistClick }) {
+  const handleImageError = (e) => {
+    e.target.style.display = 'none';
+  };
+
+  return (
+    <div className="song-card" onClick={onClick}>
+      {thumbnail && (
+        <img
+          src={thumbnail}
+          alt={song.song_name}
+          className="song-thumbnail"
+          onError={handleImageError}
+        />
+      )}
+      {!thumbnail && (
+        <div className="song-thumbnail placeholder-icon">
+          <i className="fas fa-music"></i>
+        </div>
+      )}
+      <div className="song-info">
+        <p className="song-name">{song.song_name}</p>
+        <p className="artists">
+          {Array.isArray(song.artists) ?
+            song.artists.map((artist, index) => (
+              <span key={artist.artist_id}>
+                <span
+                  className="artist-link"
+                  onClick={(e) => onArtistClick(e, artist.artist_id)}
+                >
+                  {artist.artist_name}
+                </span>
+                {index < song.artists.length - 1 && <span>, </span>}
+              </span>
+            )) :
+            song.artists
+          }
+        </p>
+      </div>
+    </div>
   );
 }
