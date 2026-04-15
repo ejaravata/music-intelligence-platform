@@ -249,7 +249,7 @@ useEffect(() => {
                     ================================ */}
                     <div className="top-songs-section">
 
-                      <h2>Top Popular Songs</h2>
+                      <h2>Top Songs by Popularity</h2>
 
                       <div className="top-songs-container">
 
@@ -312,7 +312,7 @@ useEffect(() => {
               ================================ */}
               <div className="awards-section">
 
-                <h2>Award Winning Songs</h2>
+                <h2>Grammy Award Winning Songs</h2>
 
                 {/* Year Dropdown */}
                 <select

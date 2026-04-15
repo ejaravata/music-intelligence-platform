@@ -188,13 +188,14 @@
 ================================ */
 .bar-chart {
   display: flex;
-  align-items: flex-end;
+  align-items: start-end;
   gap: 12px;
   width: 80%;
 
   height: 300px;
   padding: 10px;
-  
+  justify-content: center; /*Horizontal alignment */
+  /* align-items: center;     /* Vertical alignment */
 
   /* border: 1px solid #1DB954; */
   border-radius: 8px;
