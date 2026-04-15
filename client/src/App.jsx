@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
@@ -50,7 +50,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login setUser={setUser} />} />        
+        <Route path="/" element={user ? <Navigate to="/home" replace /> : <Login setUser={setUser} />}/>       
         <Route path="/home" element={<ProtectedRoute user={user}><Home /></ProtectedRoute>}/>
         <Route path="/overview" element={<ProtectedRoute user={user}><Overview /></ProtectedRoute>} />
         <Route path="/details" element={<ProtectedRoute user={user}><Details /></ProtectedRoute>} />
