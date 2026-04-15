@@ -15,6 +15,10 @@ app.use(cors({
   credentials: true
 }));
 
+// Manual Login / JSON body parsing
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Serve React build
 app.use(express.static(path.join(__dirname, "../client/dist"))); // Vite
 
@@ -96,8 +100,6 @@ app.get(
     return res.redirect(`${config.frontend_url}/home`);
   }
 );
-
-
 
 // Logout
 app.get('/logout', (req, res, next) => {
@@ -186,6 +188,97 @@ app.post('/register', async (req, res) => {
 
     console.error(err);
     res.json({ success: false, message: "Server error" });
+  }
+});
+
+//View Current Favorites
+app.get("/favorites", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const user_id = req.user.id;
+
+    const query = `
+      SELECT user_id, spotify_id, date_added
+      FROM user_favorites
+      WHERE user_id = $1
+      ORDER BY date_added DESC
+    `;
+
+    const result = await connection.query(query, [user_id]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching favorites:", err);
+    res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
+//Add to Favorites
+app.post('/favorites', async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { song_id } = req.body;
+
+    if (!song_id) {
+      return res.status(400).json({ error: 'song_id is required' });
+    }
+
+    const user_id = req.user.id; // or req.user.user_id depending on your session object
+
+    const query = `
+      INSERT INTO user_favorites (user_id, spotify_id, date_added)
+      VALUES ($1, $2, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id, spotify_id) DO NOTHING
+      RETURNING *
+    `;
+
+    const result = await connection.query(query, [user_id, song_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(200).json({ message: 'Song already liked' });
+    }
+
+    res.status(201).json({
+      message: 'Song added to favorites',
+      favorite: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Error adding favorite:', err);
+    res.status(500).json({ error: 'Failed to add favorite' });
+  }
+});
+
+//Delete a favorite
+app.delete("/favorites/:song_id", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const user_id = req.user.id; // change if needed
+    const { song_id } = req.params;
+
+    const query = `
+      DELETE FROM user_favorites
+      WHERE user_id = $1 AND spotify_id = $2
+      RETURNING *
+    `;
+
+    const result = await connection.query(query, [user_id, song_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Favorite not found" });
+    }
+
+    res.json({ message: "Song removed from favorites" });
+  } catch (err) {
+    console.error("Error removing favorite:", err);
+    res.status(500).json({ error: "Failed to remove favorite" });
   }
 });
 
