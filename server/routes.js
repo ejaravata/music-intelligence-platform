@@ -1539,9 +1539,8 @@ const get_audio_distribution = async function(req, res) {
 
   let query = "";
 
-  // ============================
-  // GENRE
-  // ============================
+  
+  //GENRE
   if (attribute === "genre") {
     query = `
       SELECT genre AS label, COUNT(*) AS count
@@ -1551,9 +1550,8 @@ const get_audio_distribution = async function(req, res) {
     `;
   }
 
-  // ============================
-  // KEY
-  // ============================
+  
+  //KEY
   else if (attribute === "key") {
     query = `
       SELECT key AS label, COUNT(*) AS count
@@ -1563,9 +1561,8 @@ const get_audio_distribution = async function(req, res) {
     `;
   }
 
-  // ============================
-  // DURATION BUCKETS
-  // ============================
+  
+  //DURATION BUCKETS
   else if (attribute === "duration") {
     query = `
       SELECT 
@@ -1581,9 +1578,8 @@ const get_audio_distribution = async function(req, res) {
     `;
   }
 
-  // ============================
-  // ENERGY BUCKETS
-  // ============================
+  
+  //ENERGY BUCKETS
   else if (attribute === "energy") {
     query = `
       SELECT 
@@ -1616,7 +1612,7 @@ const get_top_popular_songs = async function(req, res) {
   const pageSize = 5;
   const offset = page * pageSize;
 
-  // Prevent going beyond top 15 (3 pages total)
+  //prevent going beyond top 15 (3 pages total)
   if (page > 2) {
     return res.json([]);
   }
@@ -1639,7 +1635,7 @@ const get_top_popular_songs = async function(req, res) {
       console.log(err);
       res.json([]);
     } else {
-      // manually paginate top 15
+      //top 15 only
       const paginated = data.rows.slice(offset, offset + pageSize);
       res.json(paginated);
     }
