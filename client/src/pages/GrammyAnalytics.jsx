@@ -215,6 +215,7 @@ export default function GrammyAnalytics() {
         username={userName}
         onLogout={logout}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
+        showSearch={false}
       />
 
       <div
