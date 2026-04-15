@@ -10,6 +10,9 @@ export default function Overview() {
   const [queryResults, setQueryResults] = useState([]);
   const [searchType, setSearchType] = useState('Song');
 
+  //billboard trending states
+  const [page, setPage] = useState(0);
+
   //stats state
   const [songCount, setSongCount] = useState(0);
   const [artistCount, setArtistCount] = useState(0);
@@ -51,20 +54,20 @@ export default function Overview() {
   // ================================
   // FETCH TRENDING SONGS
   // ================================
-  const fetchTrendingSongs = () => {
-    setLoading(true);
+  // const fetchTrendingSongs = () => {
+  //   setLoading(true);
 
-    fetch(`http://${config.server_host}:${config.server_port}/billboard/trending_songs`)
-      .then(res => res.json())
-      .then(data => {
-        setQueryResults(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Error fetching trending songs:", err);
-        setLoading(false);
-      });
-  };
+  //   fetch(`http://${config.server_host}:${config.server_port}/billboard/trending_songs`)
+  //     .then(res => res.json())
+  //     .then(data => {
+  //       setQueryResults(data);
+  //       setLoading(false);
+  //     })
+  //     .catch(err => {
+  //       console.error("Error fetching trending songs:", err);
+  //       setLoading(false);
+  //     });
+  // };
 
   // ================================
   // FETCH STATS
@@ -125,26 +128,6 @@ const fetchAudioDistribution = (attr) => {
   // ================================
   // RUN ON PAGE LOAD
   // ================================
-  useEffect(() => {
-    fetchTrendingSongs();
-    fetchStats();
-    fetchYears();
-    fetchAudioDistribution("genre");
-  }, []);
-
-  useEffect(() => {
-    fetchAudioDistribution(attribute);
-  }, [attribute]);
-
-  useEffect(() => {
-  if (selectedYear) {
-    fetchAwardWinners(selectedYear, awardPage);
-  }
-}, [selectedYear, awardPage]);
-
-useEffect(() => {
-  fetchTopSongs(topPage);
-}, [topPage]);
 
   useEffect(() => {
     async function loadUser() {
@@ -168,9 +151,49 @@ useEffect(() => {
     }
 
     loadUser();
-    fetchTrendingSongs();
+    //fetchTrendingSongs();
     fetchStats();
+    fetchYears();
+    fetchAudioDistribution("genre");
   }, []);
+
+  //commented this out, too many unecessary useEffects
+  // useEffect(() => {
+  //   fetchTrendingSongs();
+  //   fetchStats();
+  //   fetchYears();
+  //   fetchAudioDistribution("genre");
+  // }, []);
+
+  useEffect(() => {
+    fetchAudioDistribution(attribute);
+  }, [attribute]);
+
+  useEffect(() => {
+    if (selectedYear) {
+        fetchAwardWinners(selectedYear, awardPage);
+      }
+    }, [selectedYear, awardPage]);
+
+  useEffect(() => {
+    fetchTopSongs(topPage);
+  }, [topPage]);
+
+  useEffect(() => {
+    const fetchSongs = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`http://${config.server_host}:${config.server_port}/billboard/trending_songs?page=${page}`);
+        const data = await res.json();
+        setQueryResults(data);
+      } catch (err) {
+        console.error(err);
+      }
+      setLoading(false);
+    };
+
+    fetchSongs();
+  }, [page]);
 
   async function logout() {
     try {
@@ -202,34 +225,52 @@ useEffect(() => {
           <SideMenu />
         </div>
 
-        {/* BILLBOARD RANKING*/}
-        <div className="overview-content">
-          <h2>Billboard Trending Songs</h2>
+        {/* BILLBOARD RANKING */}
+                <div className="overview-content">
+                  <h2>Billboard Trending Songs</h2>
 
-          {loading && <p>Loading trending songs...</p>}
+                  {loading && <p>Loading trending songs...</p>}
 
-          <div className="overview-main">
+                  <div className="overview-main">
 
-            {/* TABLE */}
-           <div className="song-list">
-                {queryResults.map((row, index) => (
-                  <div className="song-card" key={index}>
+                    {/* TABLE */}
+                    <div className="song-list">
+                      {queryResults.map((row, index) => (
+                        <div className="song-card" key={index}>
 
-                    {/* Rank */}
-                    <div className="song-rank">
-                      #{row.current_rank}
+                          {/* Rank */}
+                          <div className="song-rank">
+                            #{row.current_rank}
+                          </div>
+
+                          {/* Info */}
+                          <div className="song-info">
+                            <div className="song-title">{row.song_name}</div>
+                            <div className="song-artist">{row.string_agg}</div>
+                          </div>
+
+                        </div>
+                      ))}
                     </div>
 
-                    {/* Info */}
-                    <div className="song-info">
-                      <div className="song-title">{row.song_name}</div>
-                      <div className="song-artist">{row.string_agg}</div>
+                    {/* PAGINATION */}
+                    <div className="pagination">
+                      <button 
+                        onClick={() => setPage(prev => Math.max(prev - 1, 0))}
+                        disabled={page === 0}
+                      >
+                        Prev
+                      </button>
+
+                      <span>Page {page + 1}</span>
+
+                      <button 
+                        onClick={() => setPage(page + 1)}
+                        disabled={queryResults.length < 5}
+                      >
+                        Next
+                      </button>
                     </div>
-
-                  </div>
-                ))}
-
-              </div>
 
             {/* STATS PANEL */}
             <div className="stats-panel">

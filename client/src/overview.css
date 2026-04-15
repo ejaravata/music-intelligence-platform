@@ -290,7 +290,7 @@
    BILLBOARD CARD LIST
 ================================ */
 .song-list {
-  height: 320px;
+  max-height: 400px;
   width: 700px;
   overflow-y: auto;
 
