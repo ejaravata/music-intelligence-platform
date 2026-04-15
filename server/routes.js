@@ -452,6 +452,128 @@ const recs_from_audio_attributes = async function(req, res) {
   );
 }
 
+//Route 5b: GET /user/:user_id/recommendations/audio_attributes
+// get recs from 3 most recently favoritued songs
+const user_recs_from_audio_attributes = async function(req, res) {
+  const user_id = req.params.user_id;
+
+  connection.query(`
+    WITH recent_favorites AS (
+      SELECT spotify_id AS song_id
+      FROM user_favorites
+      WHERE user_id = $1
+        AND spotify_id IS NOT NULL
+      ORDER BY date_added DESC
+      LIMIT 3
+    ),
+    wanted_songs AS (
+      SELECT
+        rf.song_id,
+        aa.embedding
+      FROM recent_favorites rf
+      JOIN audio_attributes aa
+        ON rf.song_id = aa.song_id
+    ),
+    nearest_songs AS (
+      SELECT
+        aa.song_id,
+        aa.genre,
+        aa.popularity,
+        ROUND((aa.embedding <=> w.embedding)::numeric, 7) AS distance
+      FROM audio_attributes aa
+      JOIN wanted_songs w
+        ON aa.song_id <> w.song_id
+      WHERE aa.song_id NOT IN (
+        SELECT song_id FROM recent_favorites
+      )
+      ORDER BY distance ASC
+      LIMIT 100
+    ),
+    final_songs AS (
+      SELECT
+        s.song_id,
+        s.song_name,
+        STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artist_names,
+        n.genre,
+        n.popularity,
+        n.distance
+      FROM nearest_songs n
+      JOIN spotify_songs s
+        ON n.song_id = s.song_id
+      JOIN featured_in f
+        ON s.song_id = f.song_id
+      JOIN spotify_artists sa
+        ON f.artist_id = sa.artist_id
+      GROUP BY
+        s.song_id,
+        s.song_name,
+        n.genre,
+        n.popularity,
+        n.distance
+    ),
+    deduped AS (
+      SELECT *
+      FROM (
+        SELECT
+          fs.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY fs.song_name, fs.artist_names
+            ORDER BY fs.distance ASC, fs.popularity DESC, fs.song_id ASC
+          ) AS rn
+        FROM final_songs fs
+      ) x
+      WHERE rn = 1
+    ),
+    deduped_artist_rows AS (
+      SELECT DISTINCT
+        d.song_id,
+        d.song_name,
+        d.artist_names,
+        d.genre,
+        d.popularity,
+        d.distance,
+        sa.artist_id,
+        sa.artist_name
+      FROM deduped d
+      JOIN featured_in f
+        ON d.song_id = f.song_id
+      JOIN spotify_artists sa
+        ON f.artist_id = sa.artist_id
+    )
+    SELECT
+      song_id,
+      song_name,
+      artist_names,
+      JSON_AGG(
+        JSON_BUILD_OBJECT(
+          'artist_id', artist_id,
+          'artist_name', artist_name
+        )
+        ORDER BY artist_name
+      ) AS artists,
+      genre,
+      popularity,
+      distance
+    FROM deduped_artist_rows
+    GROUP BY
+      song_id,
+      song_name,
+      artist_names,
+      genre,
+      popularity,
+      distance
+    ORDER BY distance ASC, popularity DESC
+    LIMIT 10;
+  `, [user_id], (err, data) => {
+    if (err) {
+      console.log(err);
+      return res.json([]);
+    } else {
+      return res.json(data.rows);
+    }
+  });
+}
+
 //Route 7: GET /billboard/genre_popularity_over_time
 const billboard_genre_trends = async function(req, res) {
 /* Tracks how each subgenre’s popularity changes over time using a normalized Billboard score based on
@@ -911,29 +1033,40 @@ const user_top_artists = async function(req, res){
 
 const user_favorite_songs = async function(req, res) {
   const user_id = req.params.user_id;
+  const limit = parseInt(req.query.limit) || 50;
 
   const query = `
+    WITH latest_favorites AS (
+      SELECT
+        u.spotify_id,
+        MAX(u.date_added) AS date_added
+      FROM user_favorites u
+      WHERE u.user_id = $1
+        AND u.spotify_id IS NOT NULL
+      GROUP BY u.spotify_id
+      ORDER BY MAX(u.date_added) DESC
+      LIMIT $2
+    )
     SELECT
       s.song_name,
       STRING_AGG(DISTINCT sa.artist_name, ', ' ORDER BY sa.artist_name) AS artists,
       a.album_name,
-      u.date_added,
+      lf.date_added,
       s.song_id
-    FROM user_favorites u
+    FROM latest_favorites lf
     JOIN spotify_songs s
-      ON u.spotify_id = s.song_id
+      ON lf.spotify_id = s.song_id
     JOIN album a
       ON s.album_id = a.album_id
     JOIN featured_in fi
       ON s.song_id = fi.song_id
     JOIN spotify_artists sa
       ON fi.artist_id = sa.artist_id
-    WHERE u.user_id = $1
-    GROUP BY s.song_id, s.song_name, a.album_name, u.date_added
-    ORDER BY u.date_added DESC;
+    GROUP BY s.song_id, s.song_name, a.album_name, lf.date_added
+    ORDER BY lf.date_added DESC;
   `;
 
-  connection.query(query, [user_id], async (err, data) => {
+  connection.query(query, [user_id, limit], async (err, data) => {
     if (err) {
       console.error(err);
       return res.status(500).json([]);
@@ -1426,6 +1559,7 @@ module.exports = {
   user_most_energetic_songs,
   user_most_sad_songs,
   user_music_profile,
+  user_recs_from_audio_attributes,
   recs_from_audio_attributes,
   recs_from_genres,
   unique_song_count,

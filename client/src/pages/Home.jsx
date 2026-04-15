@@ -23,21 +23,27 @@ export default function Home() {
   const [userName, setUserName] = useState('User');
   const [selectedSong, setSelectedSong] = useState(null);
   const [isPlayerVisible, setIsPlayerVisible] = useState(false);
+  const [userId, setUserId] = useState(null);
 
-  // favorites state
   const [likedSongs, setLikedSongs] = useState(new Set());
   const [favoriteLoading, setFavoriteLoading] = useState(new Set());
+
+  const [recentFavorites, setRecentFavorites] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recImages, setRecImages] = useState({});
+  const [recentFavoriteImages, setRecentFavoriteImages] = useState({});
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
 
   const navigate = useNavigate();
   const resultsPerPage = 10;
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    loadUser();
+    loadInitialData();
     loadFavorites();
   }, []);
 
-  async function loadUser() {
+  async function loadInitialData() {
     try {
       const res = await fetch(
         `http://${config.server_host}:${config.server_port}/me`,
@@ -55,8 +61,42 @@ export default function Home() {
           : user.name || user.email || 'User';
 
       setUserName(fullName);
+      setUserId(user.id);
+
+      await loadForYou(user.id);
     } catch (err) {
       console.error('Failed to load user:', err);
+    }
+  }
+
+  async function loadForYou(currUserId) {
+    if (!currUserId) return;
+
+    try {
+      setRecommendationsLoading(true);
+
+      const [favoritesRes, recsRes] = await Promise.all([
+        fetch(
+          `http://${config.server_host}:${config.server_port}/user/favorite_songs/${currUserId}?limit=3`,
+          { credentials: 'include' }
+        ),
+        fetch(
+          `http://${config.server_host}:${config.server_port}/user/${currUserId}/recommendations/audio_attributes`,
+          { credentials: 'include' }
+        ),
+      ]);
+
+      const favoritesJson = favoritesRes.ok ? await favoritesRes.json() : [];
+      const recsJson = recsRes.ok ? await recsRes.json() : [];
+
+      setRecentFavorites(Array.isArray(favoritesJson) ? favoritesJson : []);
+      setRecommendations(Array.isArray(recsJson) ? recsJson : []);
+    } catch (err) {
+      console.error('Failed to load For You data:', err);
+      setRecentFavorites([]);
+      setRecommendations([]);
+    } finally {
+      setRecommendationsLoading(false);
     }
   }
 
@@ -72,8 +112,6 @@ export default function Home() {
       if (!res.ok) return;
 
       const favorites = await res.json();
-      console.log('favorites from backend:', favorites);
-
       setLikedSongs(
         new Set((favorites || []).map((fav) => String(fav.spotify_id)))
       );
@@ -161,6 +199,41 @@ export default function Home() {
     });
   };
 
+  const fetchForYouImages = async (songs, setter) => {
+    for (const song of songs) {
+      if (!song?.song_id) continue;
+
+      setter((prev) => {
+        if (prev[song.song_id]) return prev;
+        return prev;
+      });
+
+      try {
+        const res = await fetch(`${SPOTIFY_OEMBED_URL}${song.song_id}`);
+        const data = await res.json();
+
+        setter((prev) => ({
+          ...prev,
+          [song.song_id]: data.thumbnail_url,
+        }));
+      } catch (err) {
+        console.error('For You image fetch error:', err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (recentFavorites.length > 0) {
+      fetchForYouImages(recentFavorites, setRecentFavoriteImages);
+    }
+  }, [recentFavorites]);
+
+  useEffect(() => {
+    if (recommendations.length > 0) {
+      fetchForYouImages(recommendations, setRecImages);
+    }
+  }, [recommendations]);
+
   const handleShowPlayer = (song) => {
     setSelectedSong(song);
     setIsPlayerVisible(true);
@@ -170,7 +243,7 @@ export default function Home() {
     try {
       setFavoriteLoading((prev) => {
         const next = new Set(prev);
-        next.add(songId);
+        next.add(String(songId));
         return next;
       });
 
@@ -187,7 +260,6 @@ export default function Home() {
       );
 
       const data = await res.json();
-      console.log('POST /favorites response:', data);
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to add favorite');
@@ -200,6 +272,9 @@ export default function Home() {
       });
 
       await loadFavorites();
+      if (userId) {
+        await loadForYou(userId);
+      }
       return true;
     } catch (err) {
       console.error('Failed to add favorite:', err);
@@ -207,7 +282,7 @@ export default function Home() {
     } finally {
       setFavoriteLoading((prev) => {
         const next = new Set(prev);
-        next.delete(songId);
+        next.delete(String(songId));
         return next;
       });
     }
@@ -217,7 +292,7 @@ export default function Home() {
     try {
       setFavoriteLoading((prev) => {
         const next = new Set(prev);
-        next.add(songId);
+        next.add(String(songId));
         return next;
       });
 
@@ -230,7 +305,6 @@ export default function Home() {
       );
 
       const data = await res.json();
-      console.log('DELETE /favorites response:', data);
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to remove favorite');
@@ -243,6 +317,9 @@ export default function Home() {
       });
 
       await loadFavorites();
+      if (userId) {
+        await loadForYou(userId);
+      }
       return true;
     } catch (err) {
       console.error('Failed to remove favorite:', err);
@@ -250,16 +327,16 @@ export default function Home() {
     } finally {
       setFavoriteLoading((prev) => {
         const next = new Set(prev);
-        next.delete(songId);
+        next.delete(String(songId));
         return next;
       });
     }
   }
 
   function toggleFavorite(songId) {
-    if (favoriteLoading.has(songId)) return Promise.resolve(false);
+    if (favoriteLoading.has(String(songId))) return Promise.resolve(false);
 
-    if (likedSongs.has(songId)) {
+    if (likedSongs.has(String(songId))) {
       return unlikeSong(songId);
     }
     return likeSong(songId);
@@ -359,7 +436,16 @@ export default function Home() {
               favoriteLoading={favoriteLoading}
               onToggleFavorite={toggleFavorite}
             />
-            <RecommendationsColumn />
+            <RecommendationsColumn
+              recentFavorites={recentFavorites}
+              recommendations={recommendations}
+              recentFavoriteImages={recentFavoriteImages}
+              recImages={recImages}
+              likedSongs={likedSongs}
+              favoriteLoading={favoriteLoading}
+              onToggleFavorite={toggleFavorite}
+              loading={recommendationsLoading}
+            />
           </div>
         </section>
       </div>
@@ -446,6 +532,71 @@ function ResultsColumn({
   );
 }
 
+function RecommendationsColumn({
+  recentFavorites,
+  recommendations,
+  recentFavoriteImages,
+  recImages,
+  likedSongs,
+  favoriteLoading,
+  onToggleFavorite,
+  loading,
+}) {
+  const navigate = useNavigate();
+  const [openMenuSongId, setOpenMenuSongId] = useState(null);
+
+  return (
+    <div className="grid-column">
+      <div className="column-header">
+        <h2>For You</h2>
+        <div className="nav-arrows">
+          <button className="arrow-btn" disabled>
+            ‹
+          </button>
+          <button className="arrow-btn" disabled>
+            ›
+          </button>
+        </div>
+      </div>
+
+      {loading && <p>Loading recommendations...</p>}
+
+      {!loading && recommendations.length > 0 && (
+        <>
+          <p className="section-subtitle">Based on your 3 most recent favorites:</p>
+          <div className="songs-list">
+            {recommendations.map((song) => (
+              <SongCard
+                key={`rec-${song.song_id}`}
+                song={song}
+                thumbnail={recImages[song.song_id]}
+                onShowPlayer={() => {}}
+                onGoToSong={() => navigate(`/song/${song.song_id}`)}
+                isLiked={likedSongs.has(String(song.song_id))}
+                isFavoriteLoading={favoriteLoading.has(String(song.song_id))}
+                onToggleFavorite={() => onToggleFavorite(String(song.song_id))}
+                menuOpen={openMenuSongId === `rec-${song.song_id}`}
+                onMenuToggle={() =>
+                  setOpenMenuSongId((prev) =>
+                    prev === `rec-${song.song_id}` ? null : `rec-${song.song_id}`
+                  )
+                }
+                onCloseMenu={() => setOpenMenuSongId(null)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {!loading &&
+        recentFavorites.length === 0 &&
+        recommendations.length === 0 && (
+          <p>No recommendations yet. Favorite a few songs to get started.</p>
+        )}
+    </div>
+  );
+}
+
 function PlayerContainer({ song }) {
   if (!song) return null;
 
@@ -523,7 +674,10 @@ function SongCard({
   }, [menuOpen, onCloseMenu]);
 
   return (
-    <div className={`song-card${menuOpen ? ' song-card--menu-open' : ''}`} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`song-card${menuOpen ? ' song-card--menu-open' : ''}`}
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="song-card-main">
         {thumbnail ? (
           <img
@@ -539,7 +693,9 @@ function SongCard({
         )}
 
         <div className="song-info">
-          <p className="song-name">{song.song_name}</p>
+          <p className="song-name" onClick={onGoToSong} style={{ cursor: 'pointer' }}>
+            {song.song_name}
+          </p>
           <p className="artists">
             {Array.isArray(song.artists) ? (
               song.artists.map((artist, index) => (
@@ -630,19 +786,3 @@ function ArtistCard({ artist, image, onClick }) {
       </div>
     </div>
   );
-}
-
-function RecommendationsColumn() {
-  return (
-    <div className="grid-column">
-      <div className="column-header">
-        <h2>For You</h2>
-        <div className="nav-arrows">
-          <button className="arrow-btn">‹</button>
-          <button className="arrow-btn">›</button>
-        </div>
-      </div>
-      {/* TODO: add recommendations */}
-    </div>
-  );
-}
