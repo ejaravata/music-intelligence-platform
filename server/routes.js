@@ -928,6 +928,7 @@ const billboard_trending_songs = async function(req, res) {
   const offset = page * pageSize;
 
   connection.query(`SELECT DISTINCT
+                      MIN(s.song_id) AS song_id,
                       s.song_name,
                       STRING_AGG(DISTINCT sa.artist_name, ', '),
                       b.current_rank,
@@ -938,7 +939,7 @@ const billboard_trending_songs = async function(req, res) {
                     WHERE b.week_ending_date = (SELECT MAX(b2.week_ending_date) FROM billboard_chart b2)
                     GROUP BY s.song_name, b.current_rank, b.week_ending_date
                     ORDER BY b.current_rank ASC
-                    LIMIT $1 OFFSET $2;`, 
+                    LIMIT $1 OFFSET $2;`,
                     [pageSize, offset], (err, data) =>{
     if (err) {
       console.log(err);
@@ -1619,6 +1620,7 @@ const get_top_popular_songs = async function(req, res) {
 
   connection.query(`
     SELECT 
+      s.song_id,
       s.song_name,
       al.album_name,
       ar.artist_name,
