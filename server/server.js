@@ -311,6 +311,7 @@ app.get('/user/music_profile/:user_id', routes.user_music_profile);
 app.get('/awards/years', routes.get_award_years);
 app.get('/awards/winners', routes.get_award_winners);
 app.get('/audio/distribution', routes.get_audio_distribution);
+app.get('/songs/top_popular', routes.get_top_popular_songs);
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));

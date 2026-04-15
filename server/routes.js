@@ -1329,12 +1329,13 @@ const get_audio_distribution = async function(req, res) {
       SELECT 
         CASE 
           WHEN duration_sec < 180 THEN 'Short (<3 min)'
-          WHEN duration_sec BETWEEN 180 AND 300 THEN ' متوسط (3-5 min)'
+          WHEN duration_sec BETWEEN 180 AND 300 THEN ' Medium (3-5 min)'
           ELSE 'Long (>5 min)'
         END AS label,
         COUNT(*) AS count
       FROM audio_attributes
-      GROUP BY label;
+      GROUP BY label
+      ORDER BY label ASC;
     `;
   }
 
@@ -1362,6 +1363,42 @@ const get_audio_distribution = async function(req, res) {
       res.json([]);
     } else {
       res.json(data.rows);
+    }
+  });
+};
+
+// Route: GET /songs/top_popular
+const get_top_popular_songs = async function(req, res) {
+  const page = parseInt(req.query.page) || 0;
+  const pageSize = 5;
+  const offset = page * pageSize;
+
+  // Prevent going beyond top 15 (3 pages total)
+  if (page > 2) {
+    return res.json([]);
+  }
+
+  connection.query(`
+    SELECT 
+      s.song_name,
+      al.album_name,
+      ar.artist_name,
+      aa.genre,
+      aa.popularity
+    FROM spotify_songs s
+    JOIN audio_attributes aa ON s.song_id = aa.song_id
+    JOIN album al ON s.album_id = al.album_id
+    JOIN spotify_artists ar ON al.artist_id = ar.artist_id
+    ORDER BY aa.popularity DESC
+    LIMIT 15
+  `, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json([]);
+    } else {
+      // manually paginate top 15
+      const paginated = data.rows.slice(offset, offset + pageSize);
+      res.json(paginated);
     }
   });
 };
@@ -1397,5 +1434,6 @@ module.exports = {
   get_award_years,
   get_award_winners,
   get_audio_distribution,
+  get_top_popular_songs,
   connection
 }

@@ -19,6 +19,10 @@ export default function Overview() {
   const [attribute, setAttribute] = useState("genre");
   const [audioData, setAudioData] = useState([]);
 
+  //top songs states
+  const [topSongs, setTopSongs] = useState([]);
+  const [topPage, setTopPage] = useState(0);
+
   //years and awards
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState('');
@@ -100,6 +104,14 @@ const fetchAwardWinners = (year, page = 0) => {
     .then(data => setAwardResults(data));
 };
 
+  // ================================
+  // FETCH TOP SONGS BY SONG POPULARITY
+  // ================================
+const fetchTopSongs = (page = 0) => {
+  fetch(`http://${config.server_host}:${config.server_port}/songs/top_popular?page=${page}`)
+    .then(res => res.json())
+    .then(data => setTopSongs(data));
+};
 // ================================
   // FETCH Audio Distribution
   // ================================
@@ -129,6 +141,10 @@ const fetchAudioDistribution = (attr) => {
     fetchAwardWinners(selectedYear, awardPage);
   }
 }, [selectedYear, awardPage]);
+
+useEffect(() => {
+  fetchTopSongs(topPage);
+}, [topPage]);
 
   useEffect(() => {
     async function loadUser() {
@@ -308,7 +324,6 @@ const fetchAudioDistribution = (attr) => {
                   <div className="audio-section">
 
                     <h2>Audio Attribute Distribution</h2>
-
                     {/* Dropdown */}
                     <select
                       value={attribute}
@@ -320,23 +335,24 @@ const fetchAudioDistribution = (attr) => {
                       <option value="energy">Energy</option>
                     </select>
 
+              
                     {/* Bar Chart */}
                     <div className="bar-chart">
-                  {audioData.map((item, index) => (
-                    <div className="bar-item" key={`${attribute}-${index}`}>
+                    {audioData.map((item, index) => (
+                      <div className="bar-item" key={`${attribute}-${index}`}>
 
-                      {/* VALUE LABEL */}
-                      <span className="bar-value">{item.count}</span>
+                        {/* VALUE LABEL */}
+                        <span className="bar-value">{item.count}</span>
 
-                      <div
-                        className="bar"
-                        style={{
-                          height: `${Math.max((item.count / maxCount) * 250, 5)}px`,
-                          animation: `growBar 0.5s ease ${index * 0.05}s backwards`
-                        }}
-                      ></div>
+                        <div
+                          className="bar"
+                          style={{
+                            height: `${Math.max((item.count / maxCount) * 250, 5)}px`,
+                            animation: `growBar 0.5s ease ${index * 0.05}s backwards`
+                          }}
+                        ></div>
 
-                      <span className="bar-label">{item.label}</span>
+                        <span className="bar-label">{item.label}</span>
 
                     </div>
                   ))}
@@ -344,6 +360,57 @@ const fetchAudioDistribution = (attr) => {
 
               </div>
               {/* Add more divs after this one */}
+                  {/* ================================
+                        TOP POPULAR SONGS
+                    ================================ */}
+                    <div className="top-songs-section">
+
+                      <h2>Top Popular Songs</h2>
+
+                      <div className="top-songs-container">
+                        <table className="results-table">
+                          <thead>
+                            <tr>
+                              <th>Song</th>
+                              <th>Album</th>
+                              <th>Artist</th>
+                              <th>Genre</th>
+                            </tr>
+                          </thead>
+
+                          <tbody>
+                            {topSongs.map((row, index) => (
+                              <tr key={index}>
+                                <td>{row.song_name}</td>
+                                <td>{row.album_name}</td>
+                                <td>{row.artist_name}</td>
+                                <td>{row.genre}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Pagination */}
+                      <div className="pagination">
+                        <button
+                          onClick={() => setTopPage(prev => Math.max(prev - 1, 0))}
+                          disabled={topPage === 0}
+                        >
+                          Prev
+                        </button>
+
+                        <span>Page {topPage + 1}</span>
+
+                        <button
+                          onClick={() => setTopPage(prev => Math.min(prev + 1, 2))}
+                          disabled={topPage === 2}
+                        >
+                          Next
+                        </button>
+                      </div>
+
+                    </div>
 
           </div>
         </div>
