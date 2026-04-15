@@ -292,6 +292,7 @@ app.get('/grammys/genres', routes.grammys_genres);
 app.get('/grammys/top_winning_artists', routes.grammys_top_artists);
 app.get('/grammys/top_winning_genres', routes.grammys_top_genres);
 app.get('/search', routes.search);
+app.get('/billboard/:id', routes.billboard_song_stats)
 app.get('/artist/:id', routes.artist_info);
 app.get('/song/:id', routes.song_info);
 app.get('/artist_songs', routes.artist_songs);

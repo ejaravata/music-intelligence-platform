@@ -80,6 +80,73 @@ const search = async function(req, res) {
   }
 }
 
+// GET /billboard/:song_id
+const billboard_song_stats = async function(req, res) {
+  const id = req.params.id;
+
+  connection.query(`
+    WITH billboard_artists_grouped AS (
+      SELECT
+        week_ending_date,
+        song_name,
+        peak_rank,
+        weeks_on_board,
+        STRING_AGG(a.artist_name, ', ') AS artists
+      FROM billboard_chart b
+        JOIN spotify_artists a ON b.artist_id = a.artist_id
+      GROUP BY
+        week_ending_date,
+        song_name,
+        peak_rank,
+        weeks_on_board
+    ),
+    billboard_stats AS (
+      SELECT
+        song_name,
+        artists,
+        MAX(peak_rank) AS peak_rank,
+        MAX(weeks_on_board) AS weeks_on_board,
+        MIN(week_ending_date) AS first_appearance,
+        MAX(week_ending_date) AS last_appearance
+      FROM billboard_artists_grouped
+      GROUP BY
+        song_name,
+        artists
+    ),
+    spotify AS (
+      SELECT
+        s.song_id,
+        s.song_name,
+        STRING_AGG(a.artist_name, ', ') AS artists
+      FROM spotify_songs s
+        JOIN featured_in f ON s.song_id = f.song_id
+        JOIN spotify_artists a ON f.artist_id = a.artist_id
+      WHERE s.song_id = $1
+      GROUP BY
+        s.song_id,
+        s.song_name
+    )
+    
+    SELECT
+      s.song_id,
+      s.song_name,
+      s.artists,
+      b.peak_rank,
+      b.weeks_on_board,
+      b.first_appearance,
+      b.last_appearance
+    FROM billboard_stats b
+      JOIN spotify s ON b.song_name = s.song_name AND b.artists = s.artists;`, [id],
+    (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data.rows[0] || {});
+      }
+    });
+}
+
 const artist_info = async function(req, res) {
   const id = req.params.id;
   
@@ -451,7 +518,9 @@ const recs_from_audio_attributes = async function(req, res) {
             ROUND((aa.embedding <=> w.embedding)::numeric, 7) AS distance
           FROM audio_attributes aa
           CROSS JOIN wanted_song w
-          WHERE aa.song_id <> $1 AND aa.embedding IS NOT NULL
+          WHERE
+            aa.song_id <> $1 AND
+            aa.embedding IS NOT NULL
           ORDER BY distance ASC
           LIMIT 10
         )
@@ -1586,6 +1655,7 @@ module.exports = {
   grammys_top_artists,
   grammys_top_genres,
   search,
+  billboard_song_stats,
   song_info,
   artist_info,
   artist_songs,

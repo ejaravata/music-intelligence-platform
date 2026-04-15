@@ -8,6 +8,14 @@ import config from '../config.json';
 const SPOTIFY_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/track/';
 const API_BASE_URL = `http://${config.server_host}:${config.server_port}`;
 
+/* helper function to format date to mm/dd/yyyy */
+function formatDate(dateString) {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+}
+
 /* custom tooltip to show attribute name and value on hover */
 function AttributeTooltip({ active, payload }) {
   if (!active || !payload || payload.length === 0) {
@@ -62,6 +70,8 @@ export default function SongInfo() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [songThumbnail, setSongThumbnail] = useState(null);
   const [songData, setSongData] = useState(null);
+  const [billboardData, setBillboardData] = useState(null);
+  const [showBillboardTooltip, setShowBillboardTooltip] = useState(false);
   const [key, setKey] = useState('');
   const [mainGenre, setMainGenre] = useState('');
   const [subgenres, setSubgenres] = useState([]);
@@ -108,6 +118,10 @@ export default function SongInfo() {
 
     navigate("/", { replace: true });
   }
+
+  useEffect(() => {
+    setShowBillboardTooltip(false);
+  }, [songId]);
 
   useEffect(() => {
     if (songId) {
@@ -168,6 +182,17 @@ export default function SongInfo() {
       fetchRelatedSongImages();
     }
   }, [relatedSongs]);
+
+  useEffect(() => {
+    if (songId) {
+      fetch(`${API_BASE_URL}/billboard/${songId}`)
+        .then(res => res.json())
+        .then(data => {
+          setBillboardData(data && data.peak_rank ? data : null);
+        })
+        .catch(err => console.error('Billboard data fetch error:', err));
+    }
+  }, [songId]);
 
   const attributeColors = [
     '#e6194B',
@@ -249,6 +274,27 @@ export default function SongInfo() {
                     'Artist Name'
                   )}
                 </p>
+                {billboardData && (
+                  <div 
+                    className="billboard-icon-wrapper"
+                    onMouseEnter={() => setShowBillboardTooltip(true)}
+                    onMouseLeave={() => setShowBillboardTooltip(false)}
+                  >
+                    <i className="fas fa-fire" style={{ color: '#ff6b35', fontSize: '20px' }}></i>
+                    {showBillboardTooltip && (
+                      <div className="billboard-tooltip">
+                        <span className="billboard-tooltip-title">Billboard Top 100</span>
+                        <span className="billboard-tooltip-item">Highest Rank Reached:</span> #{billboardData.peak_rank}
+                        <br />
+                        <span className="billboard-tooltip-item">Weeks on Chart:</span> {billboardData.weeks_on_board}
+                        <br />
+                        <span className="billboard-tooltip-item">First Appearance:</span> {formatDate(billboardData.first_appearance)}
+                        <br />
+                        <span className="billboard-tooltip-item">Last Appearance:</span> {formatDate(billboardData.last_appearance)}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
