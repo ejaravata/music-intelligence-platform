@@ -108,3 +108,48 @@
   padding: 6px 12px;
   cursor: pointer;
 }
+
+.audio-section {
+  margin-top: 60px;
+}
+
+/* Dropdown */
+.audio-section select {
+  margin-bottom: 20px;
+  padding: 8px;
+}
+
+/* Chart container */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+
+  height: 300px;
+  padding: 20px;
+
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* Each bar */
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Actual bar */
+.bar {
+  width: 30px;
+  background-color: #1DB954;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+
+/* Label */
+.bar-label {
+  margin-top: 5px;
+  font-size: 12px;
+  text-align: center;
+}

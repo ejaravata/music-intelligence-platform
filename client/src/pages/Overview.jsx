@@ -15,6 +15,10 @@ export default function Overview() {
   const [artistCount, setArtistCount] = useState(0);
   const [albumCount, setAlbumCount] = useState(0);
 
+  //audio attributes state - default count by genre
+  const [attribute, setAttribute] = useState("genre");
+  const [audioData, setAudioData] = useState([]);
+
   //years and awards
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState('');
@@ -22,7 +26,7 @@ export default function Overview() {
   const [awardPage, setAwardPage] = useState(0);
 
   const [loading, setLoading] = useState(false);
-  
+  //user login stuff
   const [userName, setUserName] = useState("User");
   const navigate = useNavigate();
 
@@ -96,6 +100,16 @@ const fetchAwardWinners = (year, page = 0) => {
     .then(data => setAwardResults(data));
 };
 
+// ================================
+  // FETCH Audio Distribution
+  // ================================
+
+const fetchAudioDistribution = (attr) => {
+  fetch(`http://${config.server_host}:${config.server_port}/audio/distribution?attribute=${attr}`)
+    .then(res => res.json())
+    .then(data => setAudioData(data));
+};
+
   // ================================
   // RUN ON PAGE LOAD
   // ================================
@@ -103,7 +117,12 @@ const fetchAwardWinners = (year, page = 0) => {
     fetchTrendingSongs();
     fetchStats();
     fetchYears();
+    fetchAudioDistribution("genre");
   }, []);
+
+  useEffect(() => {
+    fetchAudioDistribution(attribute);
+  }, [attribute]);
 
   useEffect(() => {
   if (selectedYear) {
@@ -148,7 +167,8 @@ const fetchAwardWinners = (year, page = 0) => {
 
     navigate("/", { replace: true });
   }
-
+  //do not remove, used for audio attributes chart
+    const maxCount = Math.max(...audioData.map(d => d.count), 1);
   return (
     <main className="page">
       <Header
@@ -280,6 +300,43 @@ const fetchAwardWinners = (year, page = 0) => {
                 </div>
 
               </div>
+
+              {/* ================================
+                      AUDIO ATTRIBUTE VISUALIZATION
+                  ================================ */}
+                  <div className="audio-section">
+
+                    <h2>Audio Attribute Distribution</h2>
+
+                    {/* Dropdown */}
+                    <select
+                      value={attribute}
+                      onChange={(e) => setAttribute(e.target.value)}
+                    >
+                      <option value="genre">Genre</option>
+                      <option value="key">Key</option>
+                      <option value="duration">Duration</option>
+                      <option value="energy">Energy</option>
+                    </select>
+
+                    {/* Bar Chart */}
+                    <div className="bar-chart">
+                      {audioData.map((item, index) => (
+                        <div className="bar-item" key={index}>
+                          <div
+                            className="bar"
+                            style={{
+                              height: `${(item.count / maxCount) * 250}px`
+                            }}
+                          ></div>
+
+                          <span className="bar-label">{item.label}</span>
+
+                        </div>
+                      ))}
+                    </div>
+
+                  </div>
               {/* Add more divs after this one */}
 
           </div>
