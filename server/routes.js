@@ -111,14 +111,48 @@ const song_info = async function(req, res) {
     )
 
     SELECT
-      au.*,
-      s.song_name,
+      au.song_id,
+      au.tempo,
+      au.popularity,
+      au.key,
       au.genre AS main_genre,
-      sg.subgenres
-    FROM audio_attributes au
-      JOIN spotify_songs s ON au.song_id = s.song_id
+      au.duration_sec,
+      au.danceability,
+      au.energy,
+      au.loudness,
+      au.speechiness,
+      au.acousticness,
+      au.instrumentalness,
+      au.liveness,
+      au.valence,
+      au.embedding,
+      s.song_name,
+      sg.subgenres,
+      JSON_AGG(JSON_BUILD_OBJECT('artist_id', f.artist_id, 'artist_name', a.artist_name)) AS artists
+    FROM spotify_songs s
+      JOIN audio_attributes au ON s.song_id = au.song_id
+      JOIN featured_in f ON s.song_id = f.song_id
+      JOIN spotify_artists a ON f.artist_id = a.artist_id
       LEFT JOIN subgenres sg ON au.song_id = sg.song_id
-    WHERE s.song_id = $1;`, [id],
+    WHERE s.song_id = $1
+    GROUP BY
+        au.song_id,
+        au.tempo,
+        au.popularity,
+        au.key,
+        au.genre,
+        au.duration_sec,
+        au.danceability,
+        au.energy,
+        au.loudness,
+        au.speechiness,
+        au.acousticness,
+        au.instrumentalness,
+        au.liveness,
+        au.valence,
+        au.embedding,
+        s.song_name,
+        sg.subgenres;`, [id],
     (err, data) => {
       if (err) {
         console.log(err);

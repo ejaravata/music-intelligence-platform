@@ -67,6 +67,7 @@ export default function SongInfo() {
   const [subgenres, setSubgenres] = useState([]);
   const [tempo, setTempo] = useState('');
   const [loudness, setLoudness] = useState('');
+  const [artists, setArtists] = useState([]);
   const [userName, setUserName] = useState("User");
   const [relatedSongs, setRelatedSongs] = useState([]);
   const [relatedSongImages, setRelatedSongImages] = useState({});
@@ -130,6 +131,7 @@ export default function SongInfo() {
           setSubgenres(data.subgenres ? data.subgenres.split(', ') : []);
           setTempo(data.tempo || '');
           setLoudness(data.loudness || '');
+          setArtists(Array.isArray(data.artists) ? data.artists : []);
         })
         .catch(err => console.error('Song info fetch error:', err));
     }
@@ -230,7 +232,23 @@ export default function SongInfo() {
               </div>
               <div className="info-details-text">
                 <h1 className="info-title">{songData?.song_name || 'Song Title'}</h1>
-                <p className="info-subtitle">Artist Name</p>
+                <p className="info-subtitle">
+                  {artists.length > 0 ? (
+                    artists.map((artist, index) => (
+                      <span key={artist.artist_id}>
+                        <span
+                          className="artist-link"
+                          onClick={(e) => handleArtistClick(e, artist.artist_id)}
+                        >
+                          {artist.artist_name}
+                        </span>
+                        {index < artists.length - 1 && <span>, </span>}
+                      </span>
+                    ))
+                  ) : (
+                    'Artist Name'
+                  )}
+                </p>
               </div>
             </div>
 
