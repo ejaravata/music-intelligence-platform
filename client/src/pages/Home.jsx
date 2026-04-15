@@ -786,3 +786,4 @@ function ArtistCard({ artist, image, onClick }) {
       </div>
     </div>
   );
+}
