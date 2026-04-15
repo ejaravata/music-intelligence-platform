@@ -386,51 +386,70 @@ const recs_from_audio_attributes = async function(req, res) {
  */
   const song_id = req.params.song_id;
   
-  connection.query(`
-    WITH wanted_song AS (
-      SELECT embedding
-      FROM audio_attributes
-      WHERE song_id = $1
-    ),
-    nearest_songs AS (
-      SELECT
-        aa.song_id,
-        aa.genre,
-        aa.popularity,
-        ROUND((aa.embedding <=> w.embedding)::numeric, 7) AS distance
-      FROM audio_attributes aa
-      CROSS JOIN wanted_song w
-      WHERE aa.song_id <> $1
-      ORDER BY distance ASC
-      LIMIT 10
-    )
-    SELECT
-      s.song_id,
-      s.song_name,
-      STRING_AGG(DISTINCT sa.artist_name, ', ') AS artist_names,
-      n.genre,
-      n.popularity,
-      n.distance
-    FROM nearest_songs n
-      JOIN spotify_songs s ON n.song_id = s.song_id
-      JOIN featured_in f ON s.song_id = f.song_id
-      JOIN spotify_artists sa ON f.artist_id = sa.artist_id
-    GROUP BY
-      s.song_id,
-      s.song_name,
-      n.genre,
-      n.popularity,
-      n.distance
-    ORDER BY n.distance ASC;
-  `, [song_id],
-    (err, data) => {
-      if (err) {
-      console.log(err);
-      res.json([]);
-    } else {
-      res.json(data.rows);
+  // First check if the song has an embedding
+  connection.query(`SELECT embedding FROM audio_attributes WHERE song_id = $1;`, [song_id],
+    (checkErr, checkData) => {
+      if (checkErr) {
+        console.log('Error checking embedding:', checkErr);
+        return res.json([]);
+      }
+      
+      if (!checkData.rows.length || !checkData.rows[0].embedding) {
+        console.log(`No embedding found for song ${song_id}`);
+        return res.json([]);
+      }
+      
+      // Embedding exists, proceed with recommendations query
+      connection.query(`
+        WITH wanted_song AS (
+          SELECT embedding
+          FROM audio_attributes
+          WHERE song_id = $1
+        ),
+        nearest_songs AS (
+          SELECT
+            aa.song_id,
+            aa.genre,
+            aa.popularity,
+            ROUND((aa.embedding <=> w.embedding)::numeric, 7) AS distance
+          FROM audio_attributes aa
+          CROSS JOIN wanted_song w
+          WHERE aa.song_id <> $1 AND aa.embedding IS NOT NULL
+          ORDER BY distance ASC
+          LIMIT 10
+        )
+        SELECT
+          s.song_id,
+          s.song_name,
+          JSON_AGG(JSON_BUILD_OBJECT('artist_id', f.artist_id, 'artist_name', sa.artist_name)) AS artists,
+          n.genre,
+          n.popularity,
+          n.distance
+        FROM nearest_songs n
+          JOIN spotify_songs s ON n.song_id = s.song_id
+          JOIN featured_in f ON s.song_id = f.song_id
+          JOIN spotify_artists sa ON f.artist_id = sa.artist_id
+        GROUP BY
+          s.song_id,
+          s.song_name,
+          n.genre,
+          n.popularity,
+          n.distance
+        ORDER BY n.distance ASC
+        LIMIT 5;
+      `, [song_id],
+        (err, data) => {
+          if (err) {
+            console.log('Error fetching recommendations:', err);
+            res.json([]);
+          } else {
+            console.log(`Found ${data.rows.length} recommendations for song ${song_id}`);
+            res.json(data.rows);
+          }
+        }
+      );
     }
-  });
+  );
 }
 
 //Route 7: GET /billboard/genre_popularity_over_time

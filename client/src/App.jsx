@@ -10,9 +10,10 @@ import SongInfo from "./pages/SongInfo.jsx";
 import ArtistInfo from "./pages/ArtistInfo.jsx";
 import Details from "./pages/Details.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import config from "./config.json";
 
-// added path for both analytics and grammy-analytics since had some issues with 
-// the path, bc it didn't connect properly. 
+const BASE_URL = `http://${config.server_host}:${config.server_port}`;
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [checkedAuth, setCheckedAuth] = useState(false);

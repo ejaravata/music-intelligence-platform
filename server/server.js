@@ -11,7 +11,7 @@ const bcrypt = require('bcrypt');
 const app = express();
 const path = require("path");
 app.use(cors({
-  origin: '*',
+  origin: config.frontend_url,
   credentials: true
 }));
 
@@ -82,18 +82,18 @@ app.get('/me', (req, res) => {
 // Callback
 app.get(
   '/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
+  passport.authenticate('google', { failureRedirect: `${config.frontend_url}/` }),
   (req, res) => {
-    return res.redirect('/');
+    return res.redirect(`${config.frontend_url}/home`);
   }
 );
 
 // Callback
 app.get(
   '/auth/github/callback',
-  passport.authenticate('github', { failureRedirect: '/login' }),
+  passport.authenticate('github', { failureRedirect: `${config.frontend_url}/` }),
   (req, res) => {
-    return res.redirect('/');
+    return res.redirect(`${config.frontend_url}/home`);
   }
 );
 
@@ -103,7 +103,7 @@ app.get(
 app.get('/logout', (req, res, next) => {
   req.logout(err => {
     if (err) return next(err);
-    res.redirect('/login');
+    res.redirect(`${config.frontend_url}/`);
   });
 });
 

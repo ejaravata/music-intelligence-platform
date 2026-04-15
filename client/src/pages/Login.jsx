@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import config from "../config.json";
 import "../auth.css";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = `http://${config.server_host}:${config.server_port}`;
 
 export default function Login({ setUser }) {
   const navigate = useNavigate();

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Chart from "chart.js/auto";
+import config from "../config.json";
 import "../favorites.css";
 import "../auth.css";
 import SideMenu from "../components/SideMenu.jsx";
 import Header from "../components/Header.jsx";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = `http://${config.server_host}:${config.server_port}`;
 
 const FALLBACK_COVER =
   "data:image/svg+xml;utf8," +

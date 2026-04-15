@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import './SideMenu.css'
 
 const navItems = [
-  { to: "/", label: "Home", icon: "fa-home" },
+  { to: "/home", label: "Home", icon: "fa-home" },
   { to: "/overview", label: "Overview", icon: "fa-chart-pie" },
   { to: "/grammy-analytics", label: "Grammy Analytics", icon: "fa-chart-line" },
   { to: "/billboard-analytics", label: "Billboard Analytics", icon: "fa-chart-bar" },
