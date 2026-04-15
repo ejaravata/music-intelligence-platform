@@ -1500,7 +1500,8 @@ const get_audio_distribution = async function(req, res) {
   });
 };
 
-// Route: GET /songs/top_popular
+// Route 25: GET /songs/top_popular
+//get top 15 most popular songs by audio attribute "popularity"
 const get_top_popular_songs = async function(req, res) {
   const page = parseInt(req.query.page) || 0;
   const pageSize = 5;
