@@ -44,7 +44,7 @@ export default function App() {
   }, []);
 
   if (!checkedAuth) {
-    return <div>Loading...</div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Loading...</div>;
   }
   
   return (

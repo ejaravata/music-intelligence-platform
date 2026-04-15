@@ -14,7 +14,7 @@
 
 #login-section .auth-card {
   background: #0b0b0b;
-  border: 1px solid #2a2a2a;
+  border: 1px solid white;
   border-radius: 24px;
   padding: 28px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.28);
@@ -105,8 +105,8 @@
 }
 
 #login-section .auth-error {
-  min-height: 20px;
-  margin-top: 12px;
+  min-height: 0;
+  margin-top: 8px;
   color: #ff7b7b;
   font-size: 14px;
 }
@@ -144,6 +144,10 @@
   background: transparent;
   color: #f3f3f3;
   border: 1px solid #3a3a3a;
+}
+
+#login-section .primary-btn + .secondary-btn {
+  margin-top: 12px;
 }
 
 #login-section .secondary-btn:hover {
@@ -198,6 +202,7 @@
 }
 
 #login-section .button-text {
+  font-family: 'Montserrat', sans-serif;
   font-weight: 500;
   color: inherit;
 }
