@@ -1270,6 +1270,82 @@ const get_award_winners = async function(req, res) {
   });
 };
 
+// Route 24: GET /audio/distribution
+//pulls audio attribute distribution based on attribute chosen
+const get_audio_distribution = async function(req, res) {
+  const attribute = req.query.attribute;
+
+  let query = "";
+
+  // ============================
+  // GENRE
+  // ============================
+  if (attribute === "genre") {
+    query = `
+      SELECT genre AS label, COUNT(*) AS count
+      FROM audio_attributes
+      GROUP BY genre
+      ORDER BY count DESC;
+    `;
+  }
+
+  // ============================
+  // KEY
+  // ============================
+  else if (attribute === "key") {
+    query = `
+      SELECT key AS label, COUNT(*) AS count
+      FROM audio_attributes
+      GROUP BY key
+      ORDER BY key ASC;
+    `;
+  }
+
+  // ============================
+  // DURATION BUCKETS
+  // ============================
+  else if (attribute === "duration") {
+    query = `
+      SELECT 
+        CASE 
+          WHEN duration_sec < 180 THEN 'Short (<3 min)'
+          WHEN duration_sec BETWEEN 180 AND 300 THEN ' متوسط (3-5 min)'
+          ELSE 'Long (>5 min)'
+        END AS label,
+        COUNT(*) AS count
+      FROM audio_attributes
+      GROUP BY label;
+    `;
+  }
+
+  // ============================
+  // ENERGY BUCKETS
+  // ============================
+  else if (attribute === "energy") {
+    query = `
+      SELECT 
+        FLOOR(energy * 10) / 10 AS label,
+        COUNT(*) AS count
+      FROM audio_attributes
+      GROUP BY label
+      ORDER BY label;
+    `;
+  }
+
+  else {
+    return res.json([]);
+  }
+
+  connection.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json([]);
+    } else {
+      res.json(data.rows);
+    }
+  });
+};
+
 module.exports.connection = connection;
 
 //make sure to add functions to module exports here
@@ -1300,5 +1376,6 @@ module.exports = {
   unique_album_count,
   get_award_years,
   get_award_winners,
+  get_audio_distribution,
   connection
 }
