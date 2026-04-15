@@ -174,6 +174,7 @@ const fetchAudioDistribution = (attr) => {
       <Header
         siteName="Overview"
         username={userName}
+        showSearch={false}
         onLogout={logout}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
