@@ -108,7 +108,7 @@
 
 /* Awards table */
 .awards-table-container {
-  max-height: 300px;
+  max-height: 500px;
   overflow-y: auto;
   border: 1px solid #1DB954;
   border-radius: 8px;
@@ -277,7 +277,7 @@
 }
 
 .top-songs-container {
-  max-height: 300px;
+  max-height: 500px;
   overflow-y: auto;
 
   border: 1px solid #1DB954;
@@ -365,7 +365,7 @@
 
 /* Info */
 .top-song-info {
-  width: 250px;
+  width: 350px;
 }
 
 .top-song-title {

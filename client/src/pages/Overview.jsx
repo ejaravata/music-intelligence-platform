@@ -202,7 +202,7 @@ useEffect(() => {
           <SideMenu />
         </div>
 
-        {/* MAIN CONTENT */}
+        {/* BILLBOARD RANKING*/}
         <div className="overview-content">
           <h2>Billboard Trending Songs</h2>
 
@@ -228,6 +228,7 @@ useEffect(() => {
 
                   </div>
                 ))}
+
               </div>
 
             {/* STATS PANEL */}
