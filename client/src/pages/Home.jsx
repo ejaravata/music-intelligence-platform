@@ -31,6 +31,7 @@ export default function Home() {
   const [recImages, setRecImages] = useState({});
   const [recentFavoriteImages, setRecentFavoriteImages] = useState({});
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const navigate = useNavigate();
   const resultsPerPage = 10;
@@ -149,6 +150,8 @@ export default function Home() {
     setCurrentPage(0);
     setCurrentQuery(query);
     setSearchType(typeLabel);
+    setQueryResults([]);
+    setSearchLoading(true);
 
     const type = typeLabel.toLowerCase() + 's';
     const offset = 0;
@@ -162,7 +165,8 @@ export default function Home() {
         setQueryResults(resJson);
         setResultCount(resJson.length);
       })
-      .catch((err) => console.error('Search error:', err));
+      .catch((err) => console.error('Search error:', err))
+      .finally(() => setSearchLoading(false));
   };
 
   const fetchSongImages = () => {
@@ -361,6 +365,7 @@ export default function Home() {
     if (currentPage > 0) {
       const newPage = currentPage - 1;
       setCurrentPage(newPage);
+      setSearchLoading(true);
 
       const type = searchType.toLowerCase() + 's';
       const offset = newPage * resultsPerPage;
@@ -373,7 +378,8 @@ export default function Home() {
           setQueryResults(resJson);
           setResultCount(resJson.length);
         })
-        .catch((err) => console.error('Search error:', err));
+        .catch((err) => console.error('Search error:', err))
+        .finally(() => setSearchLoading(false));
     }
   };
 
@@ -381,6 +387,7 @@ export default function Home() {
     if (resultCount === resultsPerPage) {
       const newPage = currentPage + 1;
       setCurrentPage(newPage);
+      setSearchLoading(true);
 
       const type = searchType.toLowerCase() + 's';
       const offset = newPage * resultsPerPage;
@@ -393,7 +400,8 @@ export default function Home() {
           setQueryResults(resJson);
           setResultCount(resJson.length);
         })
-        .catch((err) => console.error('Search error:', err));
+        .catch((err) => console.error('Search error:', err))
+        .finally(() => setSearchLoading(false));
     }
   };
 
@@ -434,6 +442,7 @@ export default function Home() {
               likedSongs={likedSongs}
               favoriteLoading={favoriteLoading}
               onToggleFavorite={toggleFavorite}
+              searchLoading={searchLoading}
             />
             <RecommendationsColumn
               recentFavorites={recentFavorites}
@@ -468,6 +477,7 @@ function ResultsColumn({
   likedSongs,
   favoriteLoading,
   onToggleFavorite,
+  searchLoading,
 }) {
   const navigate = useNavigate();
   const [openMenuSongId, setOpenMenuSongId] = useState(null);
@@ -498,11 +508,15 @@ function ResultsColumn({
         <PlayerContainer song={selectedSong} />
       )}
 
-      {queryResults.length === 0 && !currentQuery && (
+      {searchLoading && (
+        <p>Loading results...</p>
+      )}
+
+      {!searchLoading && queryResults.length === 0 && !currentQuery && (
         <p>Use the search bar above to see results here.</p>
       )}
 
-      {queryResults.length === 0 && currentQuery && (
+      {!searchLoading && queryResults.length === 0 && currentQuery && (
         <p>No results found.</p>
       )}
 
