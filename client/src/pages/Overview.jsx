@@ -243,6 +243,70 @@ useEffect(() => {
               </div>
             </div>
 
+            {/*  */}
+            {/* ================================
+                        TOP POPULAR SONGS
+                    ================================ */}
+                    <div className="top-songs-section">
+
+                      <h2>Top Popular Songs</h2>
+
+                      <div className="top-songs-container">
+
+                        {topSongs.map((row, index) => (
+                          <div className="top-song-card" key={index}>
+
+                            {/* Song Info */}
+                            <div className="top-song-info">
+                              <div className="top-song-title">{row.song_name}</div>
+                              <div className="top-song-meta">
+                                {row.artist_name} • {row.album_name}
+                              </div>
+                              <div className="top-song-genre">{row.genre}</div>
+                            </div>
+
+                            {/* Popularity Bar */}
+                            <div className="popularity-bar-wrapper">
+                              <div
+                                className="popularity-bar"
+                                style={{
+                                  width: `${row.popularity}%`
+                                }}
+                              ></div>
+                            </div>
+
+                            {/* Value */}
+                            <div className="popularity-value">
+                              {row.popularity}
+                            </div>
+
+                          </div>
+                        ))}
+
+                      </div>
+
+                      {/* Pagination */}
+                      <div className="pagination">
+                        <button
+                          onClick={() => setTopPage(prev => Math.max(prev - 1, 0))}
+                          disabled={topPage === 0}
+                        >
+                          Prev
+                        </button>
+
+                        <span>Page {topPage + 1}</span>
+
+                        <button
+                          onClick={() => setTopPage(prev => Math.min(prev + 1, 2))}
+                          disabled={topPage === 2}
+                        >
+                          Next
+                        </button>
+                      </div>
+
+                    </div>
+            {/*  */}
+
             {/* ================================
                   AWARDS SECTION
               ================================ */}
@@ -350,57 +414,7 @@ useEffect(() => {
 
               </div>
               {/* Add more divs after this one */}
-                  {/* ================================
-                        TOP POPULAR SONGS
-                    ================================ */}
-                    <div className="top-songs-section">
-
-                      <h2>Top Popular Songs</h2>
-
-                      <div className="top-songs-container">
-                        <table className="results-table">
-                          <thead>
-                            <tr>
-                              <th>Song</th>
-                              <th>Album</th>
-                              <th>Artist</th>
-                              <th>Genre</th>
-                            </tr>
-                          </thead>
-
-                          <tbody>
-                            {topSongs.map((row, index) => (
-                              <tr key={index}>
-                                <td>{row.song_name}</td>
-                                <td>{row.album_name}</td>
-                                <td>{row.artist_name}</td>
-                                <td>{row.genre}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Pagination */}
-                      <div className="pagination">
-                        <button
-                          onClick={() => setTopPage(prev => Math.max(prev - 1, 0))}
-                          disabled={topPage === 0}
-                        >
-                          Prev
-                        </button>
-
-                        <span>Page {topPage + 1}</span>
-
-                        <button
-                          onClick={() => setTopPage(prev => Math.min(prev + 1, 2))}
-                          disabled={topPage === 2}
-                        >
-                          Next
-                        </button>
-                      </div>
-
-                    </div>
+                  
 
           </div>
         </div>
