@@ -26,12 +26,13 @@ body {
 .home-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 16px;
+  margin-top: 12px;
+  padding: 0;
 }
 
-.info-container .home-grid {
-  margin-top: 18px;
-  padding: 0 24px 24px 24px;
+.home-grid.artists {
+  margin-top: 0px;
 }
 
 .grid-column {
@@ -202,6 +203,8 @@ body {
   margin-bottom: 16px;
   align-items: center;
   padding: 24px;
+  border: 1px solid white;
+  border-radius: 12px;
 }
 
 .info-thumbnail {
@@ -323,8 +326,9 @@ body {
 }
 
 .billboard-tooltip-item {
+  color: rgb(210, 210, 210);
   background-color: #333;
-  font-weight: italic;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {

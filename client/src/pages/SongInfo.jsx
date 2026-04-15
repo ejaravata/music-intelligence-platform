@@ -298,6 +298,21 @@ export default function SongInfo() {
               </div>
             </div>
 
+            {songId && (
+              <div className="spotify-embed-container">
+                <iframe
+                  style={{ borderRadius: '12px' }}
+                  src={`https://open.spotify.com/embed/track/${songId}`}
+                  width="100%"
+                  height="152"
+                  frameBorder="0"
+                  allowFullScreen=""
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                ></iframe>
+              </div>
+            )}
+
             <div className="home-grid">
               <div className="song-attributes-section">
                 <h2>Song Attributes</h2>
