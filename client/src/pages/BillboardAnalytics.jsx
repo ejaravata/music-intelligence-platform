@@ -292,6 +292,7 @@ export default function BillboardAnalytics() {
         username={userName}
         onLogout={logout}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
+        showSearch={false}
       />
 
       <div
