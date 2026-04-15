@@ -1272,10 +1272,11 @@ const get_award_winners = async function(req, res) {
   const offset = page * pageSize;
 
   connection.query(`
-    SELECT song_title, artist, award
+    SELECT song_title, artist_name, award
     FROM grammy_songs
-    WHERE winner = true
-      AND artist != 'Not Available'
+    WHERE (winner = true OR winner = 'true')
+      AND artist_name IS NOT NULL
+      AND artist_name != 'Not Available'
       AND year = $1
     ORDER BY award ASC
     LIMIT $2 OFFSET $3;

@@ -89,7 +89,7 @@ export default function Overview() {
     .then(data => {
       setYears(data);
       if (data.length > 0) {
-        setSelectedYear(data[0].year); // default to latest year
+        setSelectedYear(data[0].year);
       }
     });
 };
@@ -274,7 +274,7 @@ const fetchAudioDistribution = (attr) => {
                       {awardResults.map((row, index) => (
                         <tr key={index}>
                           <td>{row.song_title}</td>
-                          <td>{row.artist}</td>
+                          <td>{row.artist_name}</td>
                           <td>{row.award}</td>
                         </tr>
                       ))}
@@ -322,22 +322,27 @@ const fetchAudioDistribution = (attr) => {
 
                     {/* Bar Chart */}
                     <div className="bar-chart">
-                      {audioData.map((item, index) => (
-                        <div className="bar-item" key={index}>
-                          <div
-                            className="bar"
-                            style={{
-                              height: `${(item.count / maxCount) * 250}px`
-                            }}
-                          ></div>
+                  {audioData.map((item, index) => (
+                    <div className="bar-item" key={`${attribute}-${index}`}>
 
-                          <span className="bar-label">{item.label}</span>
+                      {/* VALUE LABEL */}
+                      <span className="bar-value">{item.count}</span>
 
-                        </div>
-                      ))}
+                      <div
+                        className="bar"
+                        style={{
+                          height: `${Math.max((item.count / maxCount) * 250, 5)}px`,
+                          animation: `growBar 0.5s ease ${index * 0.05}s backwards`
+                        }}
+                      ></div>
+
+                      <span className="bar-label">{item.label}</span>
+
                     </div>
+                  ))}
+                </div>
 
-                  </div>
+              </div>
               {/* Add more divs after this one */}
 
           </div>
