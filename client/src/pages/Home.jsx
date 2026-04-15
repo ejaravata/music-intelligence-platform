@@ -6,10 +6,8 @@ import config from '../config.json';
 import '../home.css';
 import '@fortawesome/fontawesome-free/css/all.css';
 
-const SPOTIFY_OEMBED_URL =
-  'https://open.spotify.com/oembed?url=https://open.spotify.com/track/';
-const ARTIST_OEMBED_URL =
-  'https://open.spotify.com/oembed?url=https://open.spotify.com/artist/';
+const SPOTIFY_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/track/';
+const ARTIST_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/artist/';
 
 export default function Home() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
@@ -426,6 +424,7 @@ export default function Home() {
               artistImages={artistImages}
               searchType={searchType}
               currentPage={currentPage}
+              currentQuery={currentQuery}
               hasMoreResults={hasMoreResults}
               onPrevPage={handlePrevPage}
               onNextPage={handleNextPage}
@@ -459,6 +458,7 @@ function ResultsColumn({
   artistImages,
   searchType,
   currentPage,
+  currentQuery,
   hasMoreResults,
   onPrevPage,
   onNextPage,
@@ -498,36 +498,46 @@ function ResultsColumn({
         <PlayerContainer song={selectedSong} />
       )}
 
-      <div className="songs-list">
-        {queryResults.map((result) =>
-          searchType === 'Artist' ? (
-            <ArtistCard
-              key={result.artist_id}
-              artist={result}
-              image={artistImages[result.artist_id]}
-              onClick={() => navigate(`/artist/${result.artist_id}`)}
-            />
-          ) : (
-            <SongCard
-              key={result.song_id}
-              song={result}
-              thumbnail={songImages[result.song_id]}
-              onShowPlayer={() => onShowPlayer(result)}
-              onGoToSong={() => navigate(`/song/${result.song_id}`)}
-              isLiked={likedSongs.has(String(result.song_id))}
-              isFavoriteLoading={favoriteLoading.has(String(result.song_id))}
-              onToggleFavorite={() => onToggleFavorite(String(result.song_id))}
-              menuOpen={openMenuSongId === result.song_id}
-              onMenuToggle={() =>
-                setOpenMenuSongId((prev) =>
-                  prev === result.song_id ? null : result.song_id
-                )
-              }
-              onCloseMenu={() => setOpenMenuSongId(null)}
-            />
-          )
-        )}
-      </div>
+      {queryResults.length === 0 && !currentQuery && (
+        <p>Use the search bar above to see results here.</p>
+      )}
+
+      {queryResults.length === 0 && currentQuery && (
+        <p>No results found.</p>
+      )}
+
+      {queryResults.length > 0 && (
+        <div className="songs-list">
+          {queryResults.map((result) =>
+            searchType === 'Artist' ? (
+              <ArtistCard
+                key={result.artist_id}
+                artist={result}
+                image={artistImages[result.artist_id]}
+                onClick={() => navigate(`/artist/${result.artist_id}`)}
+              />
+            ) : (
+              <SongCard
+                key={result.song_id}
+                song={result}
+                thumbnail={songImages[result.song_id]}
+                onShowPlayer={() => onShowPlayer(result)}
+                onGoToSong={() => navigate(`/song/${result.song_id}`)}
+                isLiked={likedSongs.has(String(result.song_id))}
+                isFavoriteLoading={favoriteLoading.has(String(result.song_id))}
+                onToggleFavorite={() => onToggleFavorite(String(result.song_id))}
+                menuOpen={openMenuSongId === result.song_id}
+                onMenuToggle={() =>
+                  setOpenMenuSongId((prev) =>
+                    prev === result.song_id ? null : result.song_id
+                  )
+                }
+                onCloseMenu={() => setOpenMenuSongId(null)}
+              />
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }
