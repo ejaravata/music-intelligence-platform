@@ -7,9 +7,8 @@ import config from '../config.json';
 const SPOTIFY_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/track/';
 const ARTIST_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/artist/';
 
-export default function ArtistInfo() {
+export default function ArtistInfo({ onLogout }) {
   const { artistId } = useParams();
-  const navigate = useNavigate();
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [userName, setUserName] = useState("User");
   const [artistImage, setArtistImage] = useState(null);
@@ -189,24 +188,12 @@ export default function ArtistInfo() {
     navigate(`/artist/${artistId}`);
   };
 
-  async function logout() {
-    try {
-      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-
-    navigate("/", { replace: true });
-  }
-
   return (
     <main className="page">
       <Header
         siteName="Artist Info"
         username={userName}
-        onLogout={logout}
+        onLogout={onLogout}
         showSearch={false}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
