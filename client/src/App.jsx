@@ -8,7 +8,6 @@ import BillboardAnalytics from "./pages/BillboardAnalytics.jsx";
 import Favorites from "./pages/Favorites.jsx";
 import SongInfo from "./pages/SongInfo.jsx";
 import ArtistInfo from "./pages/ArtistInfo.jsx";
-import Details from "./pages/Details.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import config from "./config.json";
 
@@ -53,7 +52,6 @@ export default function App() {
         <Route path="/" element={user ? <Navigate to="/home" replace /> : <Login setUser={setUser} />}/>       
         <Route path="/home" element={<ProtectedRoute user={user}><Home /></ProtectedRoute>}/>
         <Route path="/overview" element={<ProtectedRoute user={user}><Overview /></ProtectedRoute>} />
-        <Route path="/details" element={<ProtectedRoute user={user}><Details /></ProtectedRoute>} />
         <Route path="/analytics" element={<ProtectedRoute user={user}><GrammyAnalytics /></ProtectedRoute>} />
         <Route path="/grammy-analytics" element={<ProtectedRoute user={user}><GrammyAnalytics /></ProtectedRoute>} />
         <Route path="/billboard-analytics" element={<ProtectedRoute user={user}><BillboardAnalytics /></ProtectedRoute>} />
