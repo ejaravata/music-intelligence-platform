@@ -1295,21 +1295,14 @@ const user_most_energetic_songs = async function(req, res) {
     LIMIT 10;
   `;
 
-  try {
-    const data = await connection.query(query, [user_id]);
-
-    const songsWithImages = await Promise.all(
-      data.rows.map(async (song) => ({
-        ...song,
-        image_url: await getSpotifyAlbumCover(song.song_id)
-      }))
-    );
-
-    res.json(songsWithImages);
-  } catch (err) {
-    console.log(err);
-    res.json([]);
-  }
+  connection.query(query, [user_id], (err, data) => {
+    if (err) {
+      console.log(err);
+      return res.json([]);
+    } else {
+      return res.json(data.rows);
+    }
+  });
 };
 
 // Route 16: GET /user/most_sad_songs
@@ -1338,21 +1331,14 @@ const user_most_sad_songs = async function(req, res) {
     LIMIT 10;
   `;
 
-  try {
-    const data = await connection.query(query, [user_id]);
-
-    const songsWithImages = await Promise.all(
-      data.rows.map(async (song) => ({
-        ...song,
-        image_url: await getSpotifyAlbumCover(song.song_id)
-      }))
-    );
-
-    res.json(songsWithImages);
-  } catch (err) {
-    console.log(err);
-    res.json([]);
-  }
+  connection.query(query, [user_id], (err, data) => {
+    if (err) {
+      console.log(err);
+      return res.json([]);
+    } else {
+      return res.json(data.rows);
+    }
+  });
 };
 
 // Route 17: GET /user/music_profile
