@@ -108,7 +108,7 @@ const truncateLabel = (label, maxLen = 16) => {
   return label.length > maxLen ? `${label.slice(0, maxLen)}...` : label;
 };
 
-export default function BillboardAnalytics() {
+export default function BillboardAnalytics({ onLogout }) {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [genreHistoryRows, setGenreHistoryRows] = useState([]);
   const [topTrendGenres, setTopTrendGenres] = useState([]);
