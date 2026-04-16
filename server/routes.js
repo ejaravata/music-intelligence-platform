@@ -1502,7 +1502,7 @@ const unique_artist_count = async function(req, res) {
 // Route 21: GET /stats/album_count
 const unique_album_count = async function(req, res) {
   connection.query(`
-    SELECT COUNT(DISTINCT album_id) AS album_count FROM spotify_albums;
+    SELECT COUNT(DISTINCT album_id) AS album_count FROM album;
   `, (err, data) => {
     if (err) {
       console.log(err);
