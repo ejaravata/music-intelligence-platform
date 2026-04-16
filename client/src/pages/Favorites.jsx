@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Chart from "chart.js/auto";
 import config from "../config.json";
 import "../favorites.css";
@@ -8,6 +7,7 @@ import SideMenu from "../components/SideMenu.jsx";
 import Header from "../components/Header.jsx";
 
 const BASE_URL = `http://${config.server_host}:${config.server_port}`;
+const SPOTIFY_OEMBED_URL = "https://open.spotify.com/oembed?url=https://open.spotify.com/track/";
 
 const FALLBACK_COVER =
   "data:image/svg+xml;utf8," +
@@ -20,22 +20,42 @@ const FALLBACK_COVER =
     </svg>
   `);
 
-export default function Favorites() {
-  const navigate = useNavigate();
+// Simple in-memory cache that survives route changes while the app is open
+let favoritesCache = {
+  userId: null,
+  userName: "User",
+  isLoggedIn: false,
+  songs: null,
+  genres: null,
+  attributesByType: {},
+  lastAttributeType: "energetic",
+  lastLoadedAt: 0,
+};
 
+export default function Favorites({ onLogout }) {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState(null);
-  const [userName, setUserName] = useState("User");
+  const [currentUserId, setCurrentUserId] = useState(favoritesCache.userId);
+  const [userName, setUserName] = useState(favoritesCache.userName);
 
-  const [allSongs, setAllSongs] = useState([]);
+  const [allSongs, setAllSongs] = useState(favoritesCache.songs ?? []);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPlayingId, setCurrentPlayingId] = useState(null);
 
-  const [genres, setGenres] = useState([]);
-  const [attributeType, setAttributeType] = useState("energetic");
-  const [attributes, setAttributes] = useState([]);
+  const [genres, setGenres] = useState(favoritesCache.genres ?? []);
+  const [attributeType, setAttributeType] = useState(
+    favoritesCache.lastAttributeType || "energetic"
+  );
+  const [attributes, setAttributes] = useState(
+    favoritesCache.attributesByType[
+      favoritesCache.lastAttributeType || "energetic"
+    ] ?? []
+  );
+  const [songImages, setSongImages] = useState({});
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(favoritesCache.isLoggedIn);
+  const [loading, setLoading] = useState(
+    !(favoritesCache.isLoggedIn && favoritesCache.songs && favoritesCache.genres)
+  );
 
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
@@ -55,33 +75,35 @@ export default function Favorites() {
     );
   }, [allSongs, searchQuery]);
 
-  async function logout() {
-    try {
-      await fetch(`${BASE_URL}/logout`, {
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-
-    setCurrentUserId(null);
-    setUserName("User");
-    setAllSongs([]);
-    setGenres([]);
-    setAttributes([]);
-    setCurrentPlayingId(null);
-    setSearchQuery("");
-    setIsLoggedIn(false);
-
-    if (chartInstanceRef.current) {
-      chartInstanceRef.current.destroy();
-      chartInstanceRef.current = null;
-    }
-
-    navigate("/", { replace: true });
+  function updateCache(partial) {
+    favoritesCache = {
+      ...favoritesCache,
+      ...partial,
+    };
   }
 
-  async function loadFavoriteSongs(userId) {
+  // async function logout() {
+  //   try {
+  //     const res = await fetch(`${BASE_URL}/logout`, {
+  //       method: "POST",
+  //       credentials: "include",
+  //       cache: "no-store",
+  //     });
+
+  //     console.log("LOGOUT RESPONSE STATUS:", res.status);
+
+  //     if (!res.ok) {
+  //       throw new Error("Logout request failed");
+  //     }
+
+  //     setUser?.(false);
+  //     navigate("/", { replace: true });
+  //   } catch (err) {
+  //     console.error("Logout failed", err);
+  //   }
+  // }
+
+  async function fetchFavoriteSongs(userId) {
     const res = await fetch(`${BASE_URL}/user/favorite_songs/${userId}`, {
       credentials: "include",
     });
@@ -91,10 +113,31 @@ export default function Favorites() {
     }
 
     const songs = await res.json();
-    setAllSongs(Array.isArray(songs) ? songs : []);
+    const safeSongs = Array.isArray(songs) ? songs : [];
+    setAllSongs(safeSongs);
+    updateCache({ songs: safeSongs });
+    return safeSongs;
   }
 
-  async function loadProfile(userId) {
+  async function fetchSongImage(songId) {
+    if (!songId || songImages[songId]) return;
+
+    try {
+      const res = await fetch(`${SPOTIFY_OEMBED_URL}${songId}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setSongImages((prev) => ({
+        ...prev,
+        [songId]: data.thumbnail_url || null,
+      }));
+    } catch (err) {
+      console.error("Failed to fetch song image:", err);
+    }
+  }
+
+  async function fetchProfile(userId) {
     const res = await fetch(`${BASE_URL}/user/top_genres/${userId}`, {
       credentials: "include",
     });
@@ -104,13 +147,16 @@ export default function Favorites() {
     }
 
     const data = await res.json();
-    setGenres(Array.isArray(data) ? data : []);
+    const safeGenres = Array.isArray(data) ? data : [];
+    setGenres(safeGenres);
+    updateCache({ genres: safeGenres });
+    return safeGenres;
   }
 
-  async function loadAttributes(userId, type) {
+  async function fetchAttributes(userId, type) {
     if (!userId || !type) {
       setAttributes([]);
-      return;
+      return [];
     }
 
     let endpoint = "";
@@ -121,7 +167,7 @@ export default function Favorites() {
       endpoint = `${BASE_URL}/user/most_sad_songs/${userId}`;
     } else {
       setAttributes([]);
-      return;
+      return [];
     }
 
     const res = await fetch(endpoint, {
@@ -133,23 +179,45 @@ export default function Favorites() {
     }
 
     const data = await res.json();
-    setAttributes(Array.isArray(data) ? data : []);
+    const safeAttributes = Array.isArray(data) ? data : [];
+
+    setAttributes(safeAttributes);
+    updateCache({
+      attributesByType: {
+        ...favoritesCache.attributesByType,
+        [type]: safeAttributes,
+      },
+      lastAttributeType: type,
+    });
+
+    return safeAttributes;
   }
 
-  async function loadUser() {
+  async function loadUserAndData() {
     try {
+      setLoading(true);
+
       const res = await fetch(`${BASE_URL}/me`, {
         credentials: "include",
       });
 
       if (!res.ok) {
         setIsLoggedIn(false);
+        updateCache({
+          userId: null,
+          userName: "User",
+          isLoggedIn: false,
+          songs: null,
+          genres: null,
+          attributesByType: {},
+          lastAttributeType: "energetic",
+          lastLoadedAt: 0,
+        });
         return;
       }
 
       const user = await res.json();
       const id = user.id;
-
       const fullName =
         user.first_name && user.last_name
           ? `${user.first_name} ${user.last_name}`
@@ -159,12 +227,59 @@ export default function Favorites() {
       setUserName(fullName);
       setIsLoggedIn(true);
 
-      await Promise.all([loadFavoriteSongs(id), loadProfile(id)]);
-      await loadAttributes(id, "energetic");
+      updateCache({
+        userId: id,
+        userName: fullName,
+        isLoggedIn: true,
+        lastLoadedAt: Date.now(),
+      });
+
+      await Promise.all([
+        fetchFavoriteSongs(id),
+        fetchProfile(id),
+      ]);
     } catch (err) {
       console.error("Failed to load user:", err);
       setIsLoggedIn(false);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  const CACHE_TTL = 1000 * 60 * 3;
+
+  function hydrateFromCache() {
+    const isFresh = Date.now() - favoritesCache.lastLoadedAt < CACHE_TTL;
+
+    if (!favoritesCache.isLoggedIn || !favoritesCache.userId || !isFresh) {
+      return false;
+    }
+
+    if (!favoritesCache.isLoggedIn) return false;
+    if (!favoritesCache.userId) return false;
+
+    setCurrentUserId(favoritesCache.userId);
+    setUserName(favoritesCache.userName || "User");
+    setIsLoggedIn(true);
+
+    if (favoritesCache.songs) {
+      setAllSongs(favoritesCache.songs);
+    }
+
+    if (favoritesCache.genres) {
+      setGenres(favoritesCache.genres);
+    }
+
+    const cachedAttrs =
+      favoritesCache.attributesByType[attributeType] ??
+      favoritesCache.attributesByType[favoritesCache.lastAttributeType];
+
+    if (cachedAttrs) {
+      setAttributes(cachedAttrs);
+    }
+
+    setLoading(false);
+    return true;
   }
 
   function toggleSong(songId) {
@@ -172,19 +287,33 @@ export default function Favorites() {
   }
 
   useEffect(() => {
-    loadUser();
+    const usedCache = hydrateFromCache();
+    loadUserAndData();
+
+    if (!usedCache) {
+      setLoading(true);
+    }
   }, []);
 
   useEffect(() => {
+    updateCache({ lastAttributeType: attributeType });
+
     if (!currentUserId) return;
-    loadAttributes(currentUserId, attributeType).catch((err) => {
-      console.error(err);
+
+    const cached = favoritesCache.attributesByType[attributeType];
+    if (cached && cached.length > 0) {
+      setAttributes(cached);
+      return;
+    }
+
+    fetchAttributes(currentUserId, attributeType).catch((err) => {
+      console.error("Failed to reload attributes:", err);
       setAttributes([]);
     });
   }, [currentUserId, attributeType]);
 
   useEffect(() => {
-    if (!chartRef.current || !genres.length) {
+    if (!chartRef.current || !genres.length || loading) {
       if (chartInstanceRef.current) {
         chartInstanceRef.current.destroy();
         chartInstanceRef.current = null;
@@ -194,12 +323,13 @@ export default function Favorites() {
 
     if (chartInstanceRef.current) {
       chartInstanceRef.current.destroy();
+      chartInstanceRef.current = null;
     }
 
     const labels = genres.map((g) => g.genre);
     const values = genres.map((g) => Number(g.num_favorites));
 
-    chartInstanceRef.current = new Chart(chartRef.current, {
+    const chart = new Chart(chartRef.current, {
       type: "bar",
       data: {
         labels,
@@ -236,13 +366,20 @@ export default function Favorites() {
       },
     });
 
+    chartInstanceRef.current = chart;
+
+    const resizeTimer = setTimeout(() => {
+      chart.resize();
+    }, 100);
+
     return () => {
+      clearTimeout(resizeTimer);
       if (chartInstanceRef.current) {
         chartInstanceRef.current.destroy();
         chartInstanceRef.current = null;
       }
     };
-  }, [genres]);
+  }, [genres, isSideMenuOpen, loading]);
 
   useEffect(() => {
     function handleOutsideClick(e) {
@@ -272,14 +409,26 @@ export default function Favorites() {
     return () => wrapper.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    filteredSongs.slice(0, 20).forEach((song) => {
+      fetchSongImage(song.song_id);
+    });
+  }, [filteredSongs]);
+
+  useEffect(() => {
+    attributes.slice(0, 10).forEach((song) => {
+      fetchSongImage(song.song_id);
+    });
+  }, [attributes]);
+
   const attributeMetric = attributeType === "sad" ? "valence" : "energy";
 
   return (
     <div className="favorites-page">
       <Header
-        siteName="Favorites"
+        siteName="User Favorites"
         username={userName}
-        onLogout={logout}
+        onLogout={onLogout}
         showSearch={false}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
       />
@@ -297,7 +446,11 @@ export default function Favorites() {
           <SideMenu />
         </div>
 
-        {isLoggedIn ? (
+        {loading ? (
+          <div id="login-section">
+            <p>Loading favorites...</p>
+          </div>
+        ) : isLoggedIn ? (
           <div id="app-section">
             <div id="topbar">
               <div id="search-container">
@@ -358,7 +511,7 @@ export default function Favorites() {
 
                             <img
                               className="album-art"
-                              src={s.image_url || FALLBACK_COVER}
+                              src={songImages[s.song_id] || FALLBACK_COVER}
                               alt={s.song_name ?? "Album cover"}
                               onError={(e) => {
                                 e.currentTarget.onerror = null;
@@ -422,7 +575,7 @@ export default function Favorites() {
 
                               <img
                                 className="album-art"
-                                src={s.image_url || FALLBACK_COVER}
+                                src={songImages[s.song_id] || FALLBACK_COVER}
                                 alt={s.song_name ?? "Album cover"}
                                 onError={(e) => {
                                   e.currentTarget.onerror = null;
@@ -443,7 +596,7 @@ export default function Favorites() {
                                 <div
                                   className="attr-fill"
                                   style={{ width: `${pct}%` }}
-                                ></div>
+                                />
                               </div>
                             </div>
                           );
