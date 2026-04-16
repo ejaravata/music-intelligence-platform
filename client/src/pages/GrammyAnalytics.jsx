@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import "../analytics.css";
 import config from "../config.json";
 import SideMenu from "../components/SideMenu.jsx";
@@ -64,7 +63,7 @@ function GenreBarShape(props) {
   );
 }
 
-export default function GrammyAnalytics() {
+export default function GrammyAnalytics({ onLogout }) {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [genreHistoryRows, setGenreHistoryRows] = useState([]);
   const [topTrendGenres, setTopTrendGenres] = useState([]);
@@ -72,7 +71,6 @@ export default function GrammyAnalytics() {
   const [topArtistData, setTopArtistData] = useState([]);
   const [topGenreData, setTopGenreData] = useState([]);
   const [userName, setUserName] = useState("User");
-  const navigate = useNavigate();
 
   const genreColors = [
     "#e6194B",
@@ -110,18 +108,6 @@ export default function GrammyAnalytics() {
 
     loadUser();
   }, []);
-
-  async function logout() {
-    try {
-      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-
-    navigate("/", { replace: true });
-  }
 
   useEffect(() => {
     fetch(`http://${config.server_host}:${config.server_port}/grammys/genres`)
@@ -213,7 +199,7 @@ export default function GrammyAnalytics() {
       <Header
         siteName="Grammy Analytics"
         username={userName}
-        onLogout={logout}
+        onLogout={onLogout}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
         showSearch={false}
       />

@@ -9,7 +9,7 @@ import '@fortawesome/fontawesome-free/css/all.css';
 const SPOTIFY_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/track/';
 const ARTIST_OEMBED_URL = 'https://open.spotify.com/oembed?url=https://open.spotify.com/artist/';
 
-export default function Home() {
+export default function Home({ onLogout }) {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [queryResults, setQueryResults] = useState([]);
   const [songImages, setSongImages] = useState({});
@@ -33,7 +33,6 @@ export default function Home() {
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  const navigate = useNavigate();
   const resultsPerPage = 10;
   const [searchParams] = useSearchParams();
 
@@ -133,19 +132,7 @@ export default function Home() {
       document.removeEventListener('click', handlePageClick);
     };
   }, [selectedSong, isPlayerVisible]);
-
-  async function logout() {
-    try {
-      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
-        credentials: 'include',
-      });
-    } catch (err) {
-      console.error('Logout failed', err);
-    }
-
-    navigate('/', { replace: true });
-  }
-
+  
   const handleSearch = (query, typeLabel) => {
     setCurrentPage(0);
     setCurrentQuery(query);
@@ -411,7 +398,7 @@ export default function Home() {
     <main className="page">
       <Header
         username={userName}
-        onLogout={logout}
+        onLogout={onLogout}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
         onSearch={handleSearch}

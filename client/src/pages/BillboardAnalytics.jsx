@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import "../analytics.css";
 import config from "../config.json";
 import SideMenu from "../components/SideMenu.jsx";
@@ -109,7 +108,7 @@ const truncateLabel = (label, maxLen = 16) => {
   return label.length > maxLen ? `${label.slice(0, maxLen)}...` : label;
 };
 
-export default function BillboardAnalytics() {
+export default function BillboardAnalytics({ onLogout }) {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [genreHistoryRows, setGenreHistoryRows] = useState([]);
   const [topTrendGenres, setTopTrendGenres] = useState([]);
@@ -117,7 +116,6 @@ export default function BillboardAnalytics() {
   const [topArtistData, setTopArtistData] = useState([]);
   const [annualTopSongs, setAnnualTopSongs] = useState([]);
   const [userName, setUserName] = useState("User");
-  const navigate = useNavigate();
 
   const genreColors = [
     "#e6194B",
@@ -215,18 +213,6 @@ export default function BillboardAnalytics() {
       .catch((err) => console.log(err));
   }, []);
 
-  async function logout() {
-    try {
-      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-
-    navigate("/", { replace: true });
-  }
-
   const tooltipStyle = {
     backgroundColor: "#000",
     border: "1px solid #fff",
@@ -290,7 +276,7 @@ export default function BillboardAnalytics() {
       <Header
         siteName="Billboard Analytics"
         username={userName}
-        onLogout={logout}
+        onLogout={onLogout}
         onMenuToggle={() => setIsSideMenuOpen((open) => !open)}
         showSearch={false}
       />
