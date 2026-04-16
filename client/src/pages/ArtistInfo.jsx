@@ -16,6 +16,8 @@ export default function ArtistInfo() {
   const [artistName, setArtistName] = useState('');
   const [grammyData, setGrammyData] = useState(null);
   const [showGrammyTooltip, setShowGrammyTooltip] = useState(false);
+  const [billboardData, setBillboardData] = useState(null);
+  const [showBillboardTooltip, setShowBillboardTooltip] = useState(false);
   const [songs, setSongs] = useState([]);
   const [songImages, setSongImages] = useState({});
   const [relatedArtists, setRelatedArtists] = useState([]);
@@ -69,6 +71,8 @@ export default function ArtistInfo() {
         console.error("Failed to load user:", err);
       }
     }
+
+    loadUser();
   }, []);
 
   const fetchSongImages = () => {
@@ -146,6 +150,21 @@ export default function ArtistInfo() {
 
   useEffect(() => {
     setShowGrammyTooltip(false);
+  }, [artistId]);
+
+  useEffect(() => {
+    if (artistId) {
+      fetch(`http://${config.server_host}:${config.server_port}/billboard/artist/${artistId}`)
+        .then(res => res.json())
+        .then(data => {
+          setBillboardData(data && Array.isArray(data) && data.length > 0 ? data : null);
+        })
+        .catch(err => console.error('Billboard data fetch error:', err));
+    }
+  }, [artistId]);
+
+  useEffect(() => {
+    setShowBillboardTooltip(false);
   }, [artistId]);
 
   const handlePrevPage = () => {
@@ -226,6 +245,28 @@ export default function ArtistInfo() {
                               className={`grammy-tooltip-item ${nomination.winner ? 'grammy-tooltip-win' : ''}`}
                             >
                               {nomination.work_title ? `${nomination.work_title} - ` : ''}{nomination.award} ({nomination.year})
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {billboardData && (
+                    <div 
+                      className="billboard-icon-wrapper"
+                      onMouseEnter={() => setShowBillboardTooltip(true)}
+                      onMouseLeave={() => setShowBillboardTooltip(false)}
+                    >
+                      <i className="fas fa-fire" style={{ color: '#ff6b35', fontSize: '20px' }}></i>
+                      {showBillboardTooltip && (
+                        <div className="billboard-tooltip">
+                          <span className="billboard-tooltip-title">Billboard Top 100</span>
+                          {billboardData.map((song, index) => (
+                            <div 
+                              key={index}
+                              className="billboard-tooltip-item"
+                            >
+                              {song.song_name}
                             </div>
                           ))}
                         </div>

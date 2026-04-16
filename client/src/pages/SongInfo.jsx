@@ -188,7 +188,7 @@ export default function SongInfo() {
 
   useEffect(() => {
     if (songId) {
-      fetch(`${API_BASE_URL}/billboard/${songId}`)
+      fetch(`${API_BASE_URL}/billboard/song/${songId}`)
         .then(res => res.json())
         .then(data => {
           setBillboardData(data && data.peak_rank ? data : null);

@@ -147,6 +147,24 @@ const billboard_song_stats = async function(req, res) {
     });
 }
 
+// GET /billboard/artist/:id
+const billboard_artist_stats = async function(req, res) {
+  const id = req.params.id;
+
+  connection.query(`
+    SELECT DISTINCT song_name
+    FROM billboard_chart b
+    WHERE artist_id = $1;`, [id],
+    (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json([]);
+      } else {
+        res.json(data.rows || []);
+      }
+    });
+}
+
 // GET /grammys/song/:id
 const grammys_song_stats = async function(req, res) {
   const id = req.params.id;
@@ -240,7 +258,7 @@ const artist_info = async function(req, res) {
         console.log(err);
         res.json({});
       } else {
-        res.json(data.rows[0]);
+        res.json(data.rows[0] || {});
       }
     });
 }
@@ -1734,9 +1752,10 @@ module.exports = {
   grammys_top_artists,
   grammys_top_genres,
   search,
+  billboard_song_stats,
+  billboard_artist_stats,
   grammys_song_stats,
   grammys_artist_stats,
-  billboard_song_stats,
   song_info,
   artist_info,
   artist_songs,
