@@ -296,8 +296,20 @@ body {
   border-radius: inherit;
 }
 
-.billboard-icon-wrapper {
+.icons-wrapper {
   margin-top: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.billboard-icon-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.grammy-icon-wrapper {
   position: relative;
   display: inline-block;
   cursor: pointer;
@@ -315,9 +327,35 @@ body {
   font-size: 12px;
   pointer-events: none;
   z-index: 1000;
+  white-space: nowrap;
+  min-width: 250px;
+}
+
+.grammy-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  background-color: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  white-space: nowrap;
+  min-width: 250px;
 }
 
 .billboard-tooltip-title {
+  background-color: #333;
+  font-weight: bold;
+  font-size: 13px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.grammy-tooltip-title {
   background-color: #333;
   font-weight: bold;
   font-size: 13px;
@@ -329,6 +367,23 @@ body {
   color: rgb(210, 210, 210);
   background-color: #333;
   font-style: italic;
+}
+
+.grammy-tooltip-item {
+  color: rgb(210, 210, 210);
+  background-color: #333;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.grammy-tooltip-item:last-child {
+  margin-bottom: 0;
+}
+
+.grammy-tooltip-win {
+  color: #ffd700;
+  font-weight: bold;
 }
 
 @media (max-width: 768px) {

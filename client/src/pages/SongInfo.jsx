@@ -71,7 +71,9 @@ export default function SongInfo() {
   const [songThumbnail, setSongThumbnail] = useState(null);
   const [songData, setSongData] = useState(null);
   const [billboardData, setBillboardData] = useState(null);
+  const [grammyData, setGrammyData] = useState(null);
   const [showBillboardTooltip, setShowBillboardTooltip] = useState(false);
+  const [showGrammyTooltip, setShowGrammyTooltip] = useState(false);
   const [key, setKey] = useState('');
   const [mainGenre, setMainGenre] = useState('');
   const [subgenres, setSubgenres] = useState([]);
@@ -121,6 +123,7 @@ export default function SongInfo() {
 
   useEffect(() => {
     setShowBillboardTooltip(false);
+    setShowGrammyTooltip(false);
   }, [songId]);
 
   useEffect(() => {
@@ -191,6 +194,17 @@ export default function SongInfo() {
           setBillboardData(data && data.peak_rank ? data : null);
         })
         .catch(err => console.error('Billboard data fetch error:', err));
+    }
+  }, [songId]);
+
+  useEffect(() => {
+    if (songId) {
+      fetch(`${API_BASE_URL}/grammys/${songId}`)
+        .then(res => res.json())
+        .then(data => {
+          setGrammyData(data && data.artists && data.artists.length > 0 ? data : null);
+        })
+        .catch(err => console.error('Grammy data fetch error:', err));
     }
   }, [songId]);
 
@@ -274,27 +288,51 @@ export default function SongInfo() {
                     'Artist Name'
                   )}
                 </p>
-                {billboardData && (
-                  <div 
-                    className="billboard-icon-wrapper"
-                    onMouseEnter={() => setShowBillboardTooltip(true)}
-                    onMouseLeave={() => setShowBillboardTooltip(false)}
-                  >
-                    <i className="fas fa-fire" style={{ color: '#ff6b35', fontSize: '20px' }}></i>
-                    {showBillboardTooltip && (
-                      <div className="billboard-tooltip">
-                        <span className="billboard-tooltip-title">Billboard Top 100</span>
-                        <span className="billboard-tooltip-item">Highest Rank Reached:</span> #{billboardData.peak_rank}
-                        <br />
-                        <span className="billboard-tooltip-item">Weeks on Chart:</span> {billboardData.weeks_on_board}
-                        <br />
-                        <span className="billboard-tooltip-item">First Appearance:</span> {formatDate(billboardData.first_appearance)}
-                        <br />
-                        <span className="billboard-tooltip-item">Last Appearance:</span> {formatDate(billboardData.last_appearance)}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="icons-wrapper">
+                  {billboardData && (
+                    <div 
+                      className="billboard-icon-wrapper"
+                      onMouseEnter={() => setShowBillboardTooltip(true)}
+                      onMouseLeave={() => setShowBillboardTooltip(false)}
+                    >
+                      <i className="fas fa-fire" style={{ color: '#ff6b35', fontSize: '20px' }}></i>
+                      {showBillboardTooltip && (
+                        <div className="billboard-tooltip">
+                          <span className="billboard-tooltip-title">Billboard Top 100</span>
+                          <span className="billboard-tooltip-item">Highest Rank Reached:</span> #{billboardData.peak_rank}
+                          <br />
+                          <span className="billboard-tooltip-item">Weeks on Chart:</span> {billboardData.weeks_on_board}
+                          <br />
+                          <span className="billboard-tooltip-item">First Appearance:</span> {formatDate(billboardData.first_appearance)}
+                          <br />
+                          <span className="billboard-tooltip-item">Last Appearance:</span> {formatDate(billboardData.last_appearance)}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {grammyData && (
+                    <div 
+                      className="grammy-icon-wrapper"
+                      onMouseEnter={() => setShowGrammyTooltip(true)}
+                      onMouseLeave={() => setShowGrammyTooltip(false)}
+                    >
+                      <i className="fas fa-trophy" style={{ color: '#ffd700', fontSize: '20px' }}></i>
+                      {showGrammyTooltip && (
+                        <div className="grammy-tooltip">
+                          <span className="grammy-tooltip-title">Grammy Nominations (gold = win)</span>
+                          {grammyData.artists && grammyData.artists.map((nomination, index) => (
+                            <div 
+                              key={index}
+                              className={`grammy-tooltip-item ${nomination.winner ? 'grammy-tooltip-win' : ''}`}
+                            >
+                              {nomination.award} ({nomination.year})
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

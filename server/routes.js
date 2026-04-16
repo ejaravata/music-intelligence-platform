@@ -45,7 +45,7 @@ const search = async function(req, res) {
                         JOIN featured_in f ON s.song_id = f.song_id
                         JOIN spotify_artists a ON f.artist_id = a.artist_id
                         JOIN audio_attributes au ON s.song_id = au.song_id
-                      WHERE LOWER(s.song_name) LIKE $1
+                      WHERE s.song_name ILIKE $1
                       GROUP BY
                         s.song_id,
                         s.song_name
@@ -64,7 +64,7 @@ const search = async function(req, res) {
                         artist_id,
                         artist_name
                       FROM spotify_artists
-                      WHERE LOWER(artist_name) LIKE $1
+                      WHERE artist_name ILIKE $1
                       ORDER BY popularity_score DESC
                       LIMIT $2 OFFSET $3;`, [likePattern, limit, offset],
                       (err, data) => {
@@ -146,6 +146,31 @@ const billboard_song_stats = async function(req, res) {
       }
     });
 }
+
+// GET /grammys/:song_id
+const grammys_song_stats = async function(req, res) {
+  const id = req.params.id;
+
+  connection.query(`
+    SELECT
+      song_title,
+      SUM(CASE WHEN winner = true THEN 1 ELSE 0 END) AS won,
+      COUNT(*) AS nominated,
+      JSON_AGG(JSON_BUILD_OBJECT('award', award, 'year', g.year, 'winner', winner)) AS artists
+    FROM grammy_songs g
+      JOIN spotify_songs s ON g.song_title = s.song_name AND g.year = s.year
+    WHERE song_id = $1
+    GROUP BY song_title;`, [id],
+    (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data.rows[0] || {});
+      }
+    });
+}
+
 
 const artist_info = async function(req, res) {
   const id = req.params.id;
@@ -1656,6 +1681,7 @@ module.exports = {
   grammys_top_artists,
   grammys_top_genres,
   search,
+  grammys_song_stats,
   billboard_song_stats,
   song_info,
   artist_info,
