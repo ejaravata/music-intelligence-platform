@@ -207,6 +207,7 @@ export default function ArtistInfo() {
         siteName="Artist Info"
         username={userName}
         onLogout={logout}
+        showSearch={false}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
       />
