@@ -147,7 +147,7 @@ const billboard_song_stats = async function(req, res) {
     });
 }
 
-// GET /grammys/:song_id
+// GET /grammys/song/:id
 const grammys_song_stats = async function(req, res) {
   const id = req.params.id;
 
@@ -171,7 +171,60 @@ const grammys_song_stats = async function(req, res) {
     });
 }
 
+// GET /grammys/artist/:id
+const grammys_artist_stats = async function(req, res) {
+  const id = req.params.id;
 
+  connection.query(`
+    WITH artist AS (
+      SELECT artist_name
+      FROM spotify_artists
+      WHERE artist_id = $1
+    ),
+    awards AS (
+      SELECT
+        year,
+        award,
+        winner,
+        NULL AS work_title
+      FROM grammy_artists
+      WHERE artist_name = (SELECT * FROM artist)
+
+      UNION ALL
+
+      SELECT
+        year,
+        award,
+        winner,
+        song_title AS work_title
+      FROM grammy_songs
+      WHERE artist_name = (SELECT * FROM artist)
+
+      UNION ALL
+
+      SELECT
+        year,
+        award,
+        winner,
+        album_title AS work_title
+      FROM grammy_albums
+      WHERE artist_name = (SELECT * FROM artist)
+    )
+
+    SELECT *
+    FROM awards
+    ORDER BY
+      year,
+      award;`, [id],
+    (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data.rows || {});
+      }
+    });
+}
 const artist_info = async function(req, res) {
   const id = req.params.id;
   
@@ -1682,6 +1735,7 @@ module.exports = {
   grammys_top_genres,
   search,
   grammys_song_stats,
+  grammys_artist_stats,
   billboard_song_stats,
   song_info,
   artist_info,

@@ -199,7 +199,7 @@ export default function SongInfo() {
 
   useEffect(() => {
     if (songId) {
-      fetch(`${API_BASE_URL}/grammys/${songId}`)
+      fetch(`${API_BASE_URL}/grammys/song/${songId}`)
         .then(res => res.json())
         .then(data => {
           setGrammyData(data && data.artists && data.artists.length > 0 ? data : null);
