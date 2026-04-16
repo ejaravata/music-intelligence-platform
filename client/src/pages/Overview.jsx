@@ -435,6 +435,11 @@ const fetchAudioDistribution = (attr) => {
                   <div className="audio-section">
 
                     <h2>Audio Attribute Distribution</h2>
+
+                    <p classname=".audio-card-note">
+                      Note: This chart shows the frequency of each attribute in our dataset
+                    </p>
+                    
                     {/* Dropdown */}
                     <select
                       value={attribute}
@@ -445,7 +450,7 @@ const fetchAudioDistribution = (attr) => {
                       <option value="duration">Duration</option>
                       <option value="energy">Energy</option>
                     </select>
-
+                    
               
                     {/* Bar Chart */}
                     <div className="bar-chart">
