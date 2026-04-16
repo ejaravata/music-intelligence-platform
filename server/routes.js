@@ -1579,7 +1579,7 @@ const unique_album_count = async function(req, res) {
       console.log(err);
       res.json({});
     } else {
-      res.json(data.rows[0]); // { album_count: X }
+      res.json(data.rows[0]);
     }
   });
 };
@@ -1709,7 +1709,7 @@ const get_top_popular_songs = async function(req, res) {
   const pageSize = 5;
   const offset = page * pageSize;
 
-  //prevent going beyond top 15 (3 pages total)
+  //prevent going beyond top 15, so only 3 pages
   if (page > 2) {
     return res.json([]);
   }
