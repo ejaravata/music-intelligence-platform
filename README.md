@@ -45,7 +45,7 @@ config.json
 package.json
 package-lock.json
 ```
-- Important cRDS connection credentials for connecting to our database such as local host, port number rds_db and rds_host are listed in config.json:
+- Important RDS connection credentials for connecting to our database such as local host, port number rds_db and rds_host are listed in config.json:
 ```
 {
   "rds_host": "database-cis5500-finalproject.cjpux38yq27o.us-east-1.rds.amazonaws.com",
