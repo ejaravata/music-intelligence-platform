@@ -229,6 +229,9 @@ const fetchAudioDistribution = (attr) => {
         {/* BILLBOARD RANKING */}
                 <div className="overview-content">
                   <h2>Billboard Trending Songs</h2>
+                  <p classname=".audio-card-note">
+                    Retrieves the most recent Billboard chart entries as of 2025 along with their current ranking.
+                  </p>
 
                   {loading && <p>Loading trending songs...</p>}
 
@@ -301,6 +304,9 @@ const fetchAudioDistribution = (attr) => {
                     <div className="top-songs-section">
 
                       <h2>Top Songs by Popularity</h2>
+                      <p classname=".audio-card-note">
+                        Top 15 songs in the Spotify dataset based on popularity score.
+                      </p>
 
                       <div className="top-songs-container">
 
@@ -371,6 +377,10 @@ const fetchAudioDistribution = (attr) => {
 
                 <h2>Grammy Award Winning Songs</h2>
 
+                <p classname=".audio-card-note">
+                   Grammy Awards based on year. Select a year to look through the different winners and their awards.
+                </p>
+
                 {/* Year Dropdown */}
                 <select
                   value={selectedYear}
@@ -439,7 +449,7 @@ const fetchAudioDistribution = (attr) => {
                     <p classname=".audio-card-note">
                       Note: This chart shows the frequency of each attribute in our dataset
                     </p>
-                    
+
                     {/* Dropdown */}
                     <select
                       value={attribute}
