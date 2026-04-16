@@ -37,14 +37,14 @@ cd client
 npm run build
 npm run dev
 ```
--in the folder /server the following files should be included:
+- In the folder /server the following files should be included:
 ```
 $ls
 config.json
 package.json
 package-lock.json
 ```
-- important credentials for connecting to our database such as local host, port number rds_db and rds_host are listed in config.json:
+- Important cRDS connection credentials for connecting to our database such as local host, port number rds_db and rds_host are listed in config.json:
 ```
 {
   "rds_host": "database-cis5500-finalproject.cjpux38yq27o.us-east-1.rds.amazonaws.com",
@@ -57,7 +57,7 @@ package-lock.json
   "frontend_url": "http://localhost:5173"
 }
 ```
-- important dependency versions needed to run our application are listed below:
+- Important dependency versions needed to run our application are listed below in server/package.json:
 ```
 {
   "name": "server",
@@ -86,6 +86,7 @@ package-lock.json
   }
 }
 ```
+- Our exact versions of each package in the application dependency tree for installs and maintenance are listed in server/package-lock.json.
 
 5. To start the application, go to a browser and enter this into the search bar
 ```
