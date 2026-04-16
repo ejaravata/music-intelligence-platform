@@ -65,7 +65,7 @@ function CustomBar(props) {
   );
 }
 
-export default function SongInfo() {
+export default function SongInfo({ onLogout }) {
   const { songId } = useParams();
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [songThumbnail, setSongThumbnail] = useState(null);
@@ -108,18 +108,6 @@ export default function SongInfo() {
 
     loadUser();
   }, []);
-
-  async function logout() {
-    try {
-      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-
-    navigate("/", { replace: true });
-  }
 
   useEffect(() => {
     setShowBillboardTooltip(false);
@@ -244,7 +232,7 @@ export default function SongInfo() {
       <Header
         siteName="Song Info"
         username={userName}
-        onLogout={logout}
+        onLogout={onLogout}
         showSearch={false}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
