@@ -74,7 +74,8 @@ app.get('/auth/github',
 
 //Me
 app.get('/me', (req, res) => {
-  console.log("SESSION USER:", req.user); // 👈 ADD THIS
+  res.set('Cache-Control', 'no-store');
+  console.log('ME:', req.sessionID, req.user);
 
   if (req.isAuthenticated && req.isAuthenticated()) {
     return res.json(req.user);
@@ -102,10 +103,25 @@ app.get(
 );
 
 // Logout
-app.get('/logout', (req, res, next) => {
-  req.logout(err => {
+app.post('/logout', (req, res, next) => {
+  console.log('LOGOUT before:', req.sessionID, req.user);
+
+  req.logout((err) => {
     if (err) return next(err);
-    res.redirect(`${config.frontend_url}/`);
+
+    req.session.destroy((sessionErr) => {
+      if (sessionErr) return next(sessionErr);
+
+      res.clearCookie('connect.sid', {
+        path: '/',
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+      });
+
+      console.log('LOGOUT done');
+      return res.status(200).json({ success: true });
+    });
   });
 });
 
