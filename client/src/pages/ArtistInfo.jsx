@@ -14,6 +14,8 @@ export default function ArtistInfo() {
   const [userName, setUserName] = useState("User");
   const [artistImage, setArtistImage] = useState(null);
   const [artistName, setArtistName] = useState('');
+  const [grammyData, setGrammyData] = useState(null);
+  const [showGrammyTooltip, setShowGrammyTooltip] = useState(false);
   const [songs, setSongs] = useState([]);
   const [songImages, setSongImages] = useState({});
   const [relatedArtists, setRelatedArtists] = useState([]);
@@ -131,6 +133,21 @@ export default function ArtistInfo() {
     }
   }, [relatedArtists]);
 
+  useEffect(() => {
+    if (artistId) {
+      fetch(`http://${config.server_host}:${config.server_port}/grammys/artist/${artistId}`)
+        .then(res => res.json())
+        .then(data => {
+          setGrammyData(data && Array.isArray(data) && data.length > 0 ? data : null);
+        })
+        .catch(err => console.error('Grammy data fetch error:', err));
+    }
+  }, [artistId]);
+
+  useEffect(() => {
+    setShowGrammyTooltip(false);
+  }, [artistId]);
+
   const handlePrevPage = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
@@ -192,6 +209,30 @@ export default function ArtistInfo() {
               </div>
               <div className="info-details-text">
                 <h1 className="info-title">{artistName}</h1>
+                <div className="icons-wrapper">
+                  {grammyData && (
+                    <div 
+                      className="grammy-icon-wrapper"
+                      onMouseEnter={() => setShowGrammyTooltip(true)}
+                      onMouseLeave={() => setShowGrammyTooltip(false)}
+                    >
+                      <i className="fas fa-trophy" style={{ color: '#ffd700', fontSize: '20px' }}></i>
+                      {showGrammyTooltip && (
+                        <div className="grammy-tooltip">
+                          <span className="grammy-tooltip-title">Grammy Nominations (gold = win)</span>
+                          {grammyData.map((nomination, index) => (
+                            <div 
+                              key={index}
+                              className={`grammy-tooltip-item ${nomination.winner ? 'grammy-tooltip-win' : ''}`}
+                            >
+                              {nomination.work_title ? `${nomination.work_title} - ` : ''}{nomination.award} ({nomination.year})
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
