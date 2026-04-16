@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header.jsx';
 import SideMenu from '../components/SideMenu.jsx';
 import config from '../config.json';
 import "../overview.css";
 
-export default function Overview() {
+export default function Overview({ onLogout }) {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [queryResults, setQueryResults] = useState([]);
   const [searchType, setSearchType] = useState('Song');
@@ -36,7 +35,6 @@ export default function Overview() {
   //user login stuff
   const [userName, setUserName] = useState("User");
   //need this for navigating to other pages
-  const navigate = useNavigate();
 
   // ================================
   // SEARCH FUNCTION (cleaned)
@@ -195,18 +193,7 @@ const fetchAudioDistribution = (attr) => {
 
     fetchSongs();
   }, [page]);
-
-  async function logout() {
-    try {
-      await fetch(`http://${config.server_host}:${config.server_port}/logout`, {
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-
-    navigate("/", { replace: true });
-  }
+  
   //do not remove, used for audio attributes chart
     const maxCount = audioData.length > 0 ? Math.max(...audioData.map(d => d.count)) : 1;
   return (
@@ -215,7 +202,7 @@ const fetchAudioDistribution = (attr) => {
         siteName="Overview"
         username={userName}
         showSearch={false}
-        onLogout={logout}
+        onLogout={onLogout}
         isMenuOpen={isSideMenuOpen}
         onMenuToggle={() => setIsSideMenuOpen(!isSideMenuOpen)}
         onSearch={handleSearch}
