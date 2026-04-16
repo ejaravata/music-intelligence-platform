@@ -11,6 +11,7 @@ git clone https://github.com/yujeremy21/CIS5500-Project
 $ ls
 client/  data_cleaning/  README.md  server/
 ```
+- You will need permission to clone this repository. Email Jeremy Yu at yujeremy@seas.upenn.edu to be granted permission to the repository.
 
 2. Make sure you have Node.js installed. Once that is complete, install NPM within the server and client folders using these commands (assuming Node.js is already installed on system) 
 *Note-you only need to do this step once for each folder
