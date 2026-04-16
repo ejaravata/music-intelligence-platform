@@ -80,40 +80,12 @@ const search = async function(req, res) {
   }
 }
 
-// GET /billboard/:song_id
+// GET /billboard/song/:song_id
 const billboard_song_stats = async function(req, res) {
   const id = req.params.id;
 
   connection.query(`
-    WITH billboard_artists_grouped AS (
-      SELECT
-        week_ending_date,
-        song_name,
-        peak_rank,
-        weeks_on_board,
-        STRING_AGG(a.artist_name, ', ') AS artists
-      FROM billboard_chart b
-        JOIN spotify_artists a ON b.artist_id = a.artist_id
-      GROUP BY
-        week_ending_date,
-        song_name,
-        peak_rank,
-        weeks_on_board
-    ),
-    billboard_stats AS (
-      SELECT
-        song_name,
-        artists,
-        MAX(peak_rank) AS peak_rank,
-        MAX(weeks_on_board) AS weeks_on_board,
-        MIN(week_ending_date) AS first_appearance,
-        MAX(week_ending_date) AS last_appearance
-      FROM billboard_artists_grouped
-      GROUP BY
-        song_name,
-        artists
-    ),
-    spotify AS (
+    WITH spotify AS (
       SELECT
         s.song_id,
         s.song_name,
@@ -126,7 +98,7 @@ const billboard_song_stats = async function(req, res) {
         s.song_id,
         s.song_name
     )
-    
+
     SELECT
       s.song_id,
       s.song_name,
